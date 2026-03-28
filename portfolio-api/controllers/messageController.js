@@ -1,6 +1,6 @@
 const Message = require('../models/Message');
 const SecurityLog = require('../models/SecurityLog');
-const { generateSecureCaptcha, verifyCaptcha } = require('../utils/captcha');
+const { generateSecureCaptcha, verifyCaptcha } = require('../portfolio-api/utils/captcha');
 
 // @desc    Get CAPTCHA
 // @route   GET /api/messages/captcha
