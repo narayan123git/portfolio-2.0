@@ -9,10 +9,10 @@ export default function Contact() {
     email: '',
     message: '',
     _honeypot: '', // This is the trapdoor field!
-    captchaSum: ''
+    captchaText: ''
   });
 
-  const [mathCaptcha, setMathCaptcha] = useState({ num1: 0, num2: 0, operator: '+', hash: '', expires: '' });
+  const [imageCaptcha, setImageCaptcha] = useState({ svg: '', hash: '', expires: '' });
   const [status, setStatus] = useState(null);
 
   useEffect(() => {
@@ -24,12 +24,12 @@ export default function Contact() {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/messages/captcha`);
       const data = await res.json();
       if (data.success) {
-        setMathCaptcha(data.data);
+        setImageCaptcha(data.data);
       }
     } catch (err) {
       console.error("Failed to fetch captcha");
     }
-    setFormData(prev => ({ ...prev, captchaSum: '' }));
+    setFormData(prev => ({ ...prev, captchaText: '' }));
   };
 
   const handleChange = (e) => {
@@ -44,8 +44,8 @@ export default function Contact() {
       // Send the hash and user's answer to the server for secure validation
       const payload = {
         ...formData,
-        captchaHash: mathCaptcha.hash,
-        captchaExpires: mathCaptcha.expires
+        captchaHash: imageCaptcha.hash,
+        captchaExpires: imageCaptcha.expires
       };
 
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/messages`, {
@@ -60,7 +60,7 @@ export default function Contact() {
 
       if (data.success) {
         setStatus('Message sent successfully!');
-        setFormData({ name: '', email: '', message: '', _honeypot: '', captchaSum: '' });
+        setFormData({ name: '', email: '', message: '', _honeypot: '', captchaText: '' });
         fetchCaptcha(); // Reset captcha for new messages
       } else {
         setStatus(data.message || 'Something went wrong.');
@@ -144,21 +144,33 @@ export default function Contact() {
               </div>
             </div>
 
-            {/* 🤖 Dynamic Math Captcha! Extremely powerful against automated scripts */}
-            <div className="flex items-center space-x-4 mb-4">
-              <label htmlFor="captchaSum" className="text-sm font-medium text-gray-700 whitespace-nowrap">
-                Verify you are human: <span className="font-bold text-blue-600">{mathCaptcha.num1} {mathCaptcha.operator} {mathCaptcha.num2} = ?</span>
+            {/* Image CAPTCHA */}
+            <div className="mb-4">
+              <label htmlFor="captchaText" className="block text-sm font-medium text-gray-700 mb-2">
+                Verify you are human
               </label>
+              <div className="flex items-center gap-3 mb-2">
+                <div
+                  className="border border-gray-300 rounded-md px-2 py-1 bg-gray-100"
+                  aria-label="captcha image"
+                  dangerouslySetInnerHTML={{ __html: imageCaptcha.svg || '' }}
+                />
+                <button
+                  type="button"
+                  onClick={fetchCaptcha}
+                  className="px-3 py-2 text-sm rounded-md border border-gray-300 text-gray-700 hover:bg-gray-100"
+                >
+                  Refresh
+                </button>
+              </div>
               <input
-                id="captchaSum"
-                name="captchaSum"
+                id="captchaText"
+                name="captchaText"
                 type="text"
-                inputMode="numeric"
-                pattern="[0-9]*"
                 required
-                className="appearance-none block w-24 px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                placeholder="Answer"
-                value={formData.captchaSum}
+                className="appearance-none block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                placeholder="Enter the text from the image"
+                value={formData.captchaText}
                 onChange={handleChange}
               />
             </div>

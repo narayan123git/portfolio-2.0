@@ -60,15 +60,7 @@ const limiter = rateLimit({
 });
 app.use('/api/', limiter); // Apply rate limiting to all API routes
 
-// 8. Strict Rate Limiting for the Contact Form (Messages API)
-const contactLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000, // 1 hour
-  max: 5, // Limit each IP to 5 messages per hour
-  message: 'You have exceeded the maximum message limit. Please try again later.'
-});
-app.use('/api/messages', contactLimiter);
-
-// 9. Strict Rate Limiting for Authentication (Brute force protection)
+// 8. Strict Rate Limiting for Authentication (Brute force protection)
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 10, // Limit each IP to 10 login attempts per 15 mins
@@ -76,7 +68,7 @@ const authLimiter = rateLimit({
 });
 app.use('/api/auth', authLimiter);
 
-// 10. Activate the custom Honeypot Trap
+// 9. Activate the custom Honeypot Trap
 app.use(honeypot);
 
 // --- 🛡️ ULTRA-SECURITY MIDDLEWARE END 🛡️ ---

@@ -1,39 +1,40 @@
 const crypto = require('crypto');
+const svgCaptcha = require('svg-captcha');
 
 const SECRET_KEY = process.env.JWT_SECRET || 'fallback_secret_key_for_captcha';
 
 exports.generateSecureCaptcha = () => {
-  const num1 = Math.floor(Math.random() * 10) + 1;
-  const num2 = Math.floor(Math.random() * 10) + 1;
-  const operator = Math.random() > 0.5 ? '+' : '*'; // Randomize operators!
-  
-  let answer;
-  if (operator === '+') {
-      answer = num1 + num2;
-  } else {
-      answer = num1 * num2;
-  }
+  const captcha = svgCaptcha.create({
+    size: 5,
+    noise: 4,
+    color: true,
+    ignoreChars: '0o1ilI',
+    background: '#f8fafc'
+  });
 
-  // Create a secure expiration timestamp (e.g. valid for 5 minutes)
+  const answer = captcha.text.toUpperCase();
+
   const expires = Date.now() + (5 * 60 * 1000); 
 
-  // Create a secure hash combining the answer and expiration time
   const payload = `${answer}:${expires}`;
   const hash = crypto.createHmac('sha256', SECRET_KEY).update(payload).digest('hex');
 
-  // We send the question, the hash, and the expiration to the client. We NEVER send 'answer'.
-  return { num1, num2, operator, hash, expires };
+  return { svg: captcha.data, hash, expires };
 };
 
-exports.verifyCaptcha = (userAnswer, providedHash, providedExpires) => {
-  if (!userAnswer || !providedHash || !providedExpires) return false;
-  
-  // Check if expired
-  if (Date.now() > parseInt(providedExpires)) return false;
+exports.verifyCaptcha = (userInput, providedHash, providedExpires) => {
+  if (!userInput || !providedHash || !providedExpires) return false;
 
-  // Re-hash the user's answer
-  const payload = `${userAnswer}:${providedExpires}`;
+  const expires = parseInt(providedExpires, 10);
+  if (Number.isNaN(expires)) return false;
+  
+  if (Date.now() > expires) return false;
+
+  const normalizedInput = String(userInput).trim().toUpperCase();
+  if (!normalizedInput) return false;
+
+  const payload = `${normalizedInput}:${expires}`;
   const checkHash = crypto.createHmac('sha256', SECRET_KEY).update(payload).digest('hex');
   
-  return checkHash === providedHash; // It is secure only if hashes perfectly match
+  return checkHash === providedHash;
 };

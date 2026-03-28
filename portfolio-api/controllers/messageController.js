@@ -15,7 +15,7 @@ const getCaptcha = (req, res) => {
 // @access  Public
 const sendMessage = async (req, res) => {
   try {
-    const { name, email, message, _honeypot, captchaSum, captchaHash, captchaExpires } = req.body;
+    const { name, email, message, _honeypot, captchaText, captchaHash, captchaExpires } = req.body;
 
     // The Trapdoor Feature
     if (_honeypot) {
@@ -31,16 +31,16 @@ const sendMessage = async (req, res) => {
       return res.status(200).json({ success: true, message: 'Message sent successfully.' });
     }
 
-    // Dynamic Server-Side Verified Math Captcha Validation
-    if (!verifyCaptcha(captchaSum, captchaHash, captchaExpires)) {
+    // Dynamic server-side verified image captcha validation
+    if (!verifyCaptcha(captchaText, captchaHash, captchaExpires)) {
       const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
       await SecurityLog.create({
         eventType: 'CAPTCHA_FAILED',
         ipAddress: ip,
         userAgent: req.headers['user-agent'],
-        details: `Failed Math Captcha. Answer provided: ${captchaSum}.`
+        details: `Failed image captcha. Text provided: ${captchaText}.`
       });
-      return res.status(400).json({ success: false, message: 'Bot protection check failed. Incorrect math answer or captcha expired.' });
+      return res.status(400).json({ success: false, message: 'Bot protection check failed. Incorrect captcha or captcha expired.' });
     }
 
     // Validation
@@ -100,5 +100,4 @@ module.exports = {
   sendMessage,
   getMessages,
   deleteMessage
-};
 };
