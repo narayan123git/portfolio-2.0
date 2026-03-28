@@ -89,6 +89,7 @@ export default function DiaryManager() {
             <option value="DEBUGGING">DEBUGGING</option>
             <option value="LEARNING">LEARNING</option>
             <option value="PLANNING">PLANNING</option>
+            <option value="OTHER">OTHER</option>
           </select>
         </div>
 

@@ -26,7 +26,7 @@ app.set('trust proxy', 1);
 app.use(helmet());
 
 // 2. Strict CORS Configuration (Only allow your exact frontend domains)
-const allowedOrigins = ['http://localhost:3000', process.env.FRONTEND_URL];
+const allowedOrigins = [process.env.FRONTEND_URL];
 app.use(cors({
   origin: function (origin, callback) {
     if (!origin || allowedOrigins.indexOf(origin) !== -1) {
