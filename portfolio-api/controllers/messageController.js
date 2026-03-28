@@ -6,10 +6,9 @@ const SecurityLog = require('../models/SecurityLog');
 // @access  Public
 const sendMessage = async (req, res) => {
   try {
-    const { name, email, message, _honeypot } = req.body;
+    const { name, email, message, _honeypot, num1, num2, captchaSum } = req.body;
 
     // The Trapdoor Feature
-    // If a bot fills in the hidden honeypot field, we trap it
     if (_honeypot) {
       const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
       
@@ -20,8 +19,20 @@ const sendMessage = async (req, res) => {
         details: `Spambot attempted to send a message. Bot name: ${name}, Email: ${email}`
       });
 
-      // We return a fake 'ok' response so the bot thinks it succeeded
       return res.status(200).json({ success: true, message: 'Message sent successfully.' });
+    }
+
+    // Dynamic Math Captcha Validation (Protects against custom bypass scripts)
+    const expectedSum = Number(num1) + Number(num2);
+    if (isNaN(expectedSum) || Number(captchaSum) !== expectedSum) {
+      const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+      await SecurityLog.create({
+        eventType: 'CAPTCHA_FAILED',
+        ipAddress: ip,
+        userAgent: req.headers['user-agent'],
+        details: `Failed Math Captcha. Expected ${expectedSum} but got ${captchaSum}.`
+      });
+      return res.status(400).json({ success: false, message: 'Bot protection check failed. Incorrect math answer.' });
     }
 
     // Validation

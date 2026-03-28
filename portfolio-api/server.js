@@ -17,6 +17,9 @@ connectDB();
 
 const app = express();
 
+// Trust the proxy to get the real client IP (Fixes rate-limiting behind Next.js proxy)
+app.set('trust proxy', 1);
+
 // --- 🛡️ ULTRA-SECURITY MIDDLEWARE START 🛡️ ---
 
 // 1. Set secure HTTP headers

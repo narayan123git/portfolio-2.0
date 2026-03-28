@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Navbar from '@/components/navbar';
 
 export default function Contact() {
@@ -8,10 +8,25 @@ export default function Contact() {
     name: '',
     email: '',
     message: '',
-    _honeypot: '' // This is the trapdoor field!
+    _honeypot: '', // This is the trapdoor field!
+    captchaSum: ''
   });
 
+  const [mathCaptcha, setMathCaptcha] = useState({ num1: 0, num2: 0 });
   const [status, setStatus] = useState(null);
+
+  useEffect(() => {
+    // Generate random numbers on client side to avoid Next.js hydration errors
+    generateCaptcha();
+  }, []);
+
+  const generateCaptcha = () => {
+    setMathCaptcha({
+      num1: Math.floor(Math.random() * 10) + 1,
+      num2: Math.floor(Math.random() * 10) + 1
+    });
+    setFormData(prev => ({ ...prev, captchaSum: '' }));
+  };
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -22,19 +37,27 @@ export default function Contact() {
     setStatus('Submitting...');
 
     try {
+      // Send the random generated numbers and the user's answer to the server for validation
+      const payload = {
+        ...formData,
+        num1: mathCaptcha.num1,
+        num2: mathCaptcha.num2
+      };
+
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/messages`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(payload)
       });
 
       const data = await res.json();
 
       if (data.success) {
         setStatus('Message sent successfully!');
-        setFormData({ name: '', email: '', message: '', _honeypot: '' });
+        setFormData({ name: '', email: '', message: '', _honeypot: '', captchaSum: '' });
+        generateCaptcha(); // Reset captcha for new messages
       } else {
         setStatus(data.message || 'Something went wrong.');
       }
@@ -115,6 +138,25 @@ export default function Contact() {
                   onChange={handleChange}
                 ></textarea>
               </div>
+            </div>
+
+            {/* 🤖 Dynamic Math Captcha! Extremely powerful against automated scripts */}
+            <div className="flex items-center space-x-4 mb-4">
+              <label htmlFor="captchaSum" className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                Verify you are human: <span className="font-bold text-blue-600">{mathCaptcha.num1} + {mathCaptcha.num2} = ?</span>
+              </label>
+              <input
+                id="captchaSum"
+                name="captchaSum"
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                required
+                className="appearance-none block w-24 px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                placeholder="Answer"
+                value={formData.captchaSum}
+                onChange={handleChange}
+              />
             </div>
 
             {status && (
