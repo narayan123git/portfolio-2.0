@@ -1,12 +1,21 @@
 const Message = require('../models/Message');
 const SecurityLog = require('../models/SecurityLog');
+const { generateSecureCaptcha, verifyCaptcha } = require('../utils/captcha');
+
+// @desc    Get CAPTCHA
+// @route   GET /api/messages/captcha
+// @access  Public
+const getCaptcha = (req, res) => {
+  const captchaData = generateSecureCaptcha();
+  res.status(200).json({ success: true, data: captchaData });
+};
 
 // @desc    Send a new message
 // @route   POST /api/messages
 // @access  Public
 const sendMessage = async (req, res) => {
   try {
-    const { name, email, message, _honeypot, num1, num2, captchaSum } = req.body;
+    const { name, email, message, _honeypot, captchaSum, captchaHash, captchaExpires } = req.body;
 
     // The Trapdoor Feature
     if (_honeypot) {
@@ -22,17 +31,16 @@ const sendMessage = async (req, res) => {
       return res.status(200).json({ success: true, message: 'Message sent successfully.' });
     }
 
-    // Dynamic Math Captcha Validation (Protects against custom bypass scripts)
-    const expectedSum = Number(num1) + Number(num2);
-    if (isNaN(expectedSum) || Number(captchaSum) !== expectedSum) {
+    // Dynamic Server-Side Verified Math Captcha Validation
+    if (!verifyCaptcha(captchaSum, captchaHash, captchaExpires)) {
       const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
       await SecurityLog.create({
         eventType: 'CAPTCHA_FAILED',
         ipAddress: ip,
         userAgent: req.headers['user-agent'],
-        details: `Failed Math Captcha. Expected ${expectedSum} but got ${captchaSum}.`
+        details: `Failed Math Captcha. Answer provided: ${captchaSum}.`
       });
-      return res.status(400).json({ success: false, message: 'Bot protection check failed. Incorrect math answer.' });
+      return res.status(400).json({ success: false, message: 'Bot protection check failed. Incorrect math answer or captcha expired.' });
     }
 
     // Validation
@@ -88,7 +96,9 @@ const deleteMessage = async (req, res) => {
 };
 
 module.exports = {
+  getCaptcha,
   sendMessage,
   getMessages,
   deleteMessage
+};
 };

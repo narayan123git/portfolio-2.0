@@ -1,9 +1,11 @@
 const express = require('express');
 const { body, validationResult } = require('express-validator');
-const { sendMessage, getMessages, deleteMessage } = require('../controllers/messageController');
+const { getCaptcha, sendMessage, getMessages, deleteMessage } = require('../controllers/messageController');
 const { protect } = require('../middleware/authMiddleware');
 
 const router = express.Router();
+
+router.get('/captcha', getCaptcha);
 
 // Middleware to handle validation errors
 const validateMessage = [
