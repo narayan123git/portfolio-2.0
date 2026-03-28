@@ -1,12 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import Navbar from "../../components/navbar";
 
 export default function Projects() {
   const [projects, setProjects] = useState([]);
+  const [filteredProjects, setFilteredProjects] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedTech, setSelectedTech] = useState("All");
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -14,7 +18,10 @@ export default function Projects() {
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/projects`);
         if (!res.ok) throw new Error("Failed to fetch system records.");
         const data = await res.json();
-        setProjects(data);
+        // The API returns { success: true, count: N, data: [...] }
+        const p = data.data || [];
+        setProjects(p);
+        setFilteredProjects(p);
       } catch (err) {
         setError(err.message);
       } finally {
@@ -24,15 +31,78 @@ export default function Projects() {
     fetchProjects();
   }, []);
 
+  // Filter Logic
+  useEffect(() => {
+    let result = projects;
+    
+    // Search Filter
+    if (searchQuery.trim() !== "") {
+      const q = searchQuery.toLowerCase();
+      result = result.filter(p => 
+        p.title.toLowerCase().includes(q) || 
+        p.description.toLowerCase().includes(q) ||
+        p.techStack.some(t => t.toLowerCase().includes(q))
+      );
+    }
+    
+    // Tech Stack Filter
+    if (selectedTech !== "All") {
+      result = result.filter(p => p.techStack.includes(selectedTech));
+    }
+    
+    setFilteredProjects(result);
+  }, [searchQuery, selectedTech, projects]);
+
+  // Extract unique tech stack tags from all projects
+  const allTechStacks = ["All", ...new Set(projects.flatMap(p => p.techStack))].sort();
+
   return (
     <div className="min-h-screen bg-gray-950 text-green-400 font-mono pb-20">
       <Navbar />
       
       <main className="max-w-6xl mx-auto px-6 pt-20">
-        <header className="mb-16 border-b border-green-900/50 pb-6">
+        <header className="mb-10 border-b border-green-900/50 pb-6">
           <h1 className="text-4xl font-bold text-white tracking-widest">/PROJECTS</h1>
           <p className="text-sm text-green-600 mt-2">&gt; Executing query: SELECT * FROM portfolio_projects...</p>
         </header>
+
+        {/* Filter & Search Bar */}
+        <div className="mb-12 space-y-4">
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="flex-1 relative">
+              <span className="absolute left-3 top-3 text-green-600">&gt; grep -i</span>
+              <input 
+                type="text" 
+                placeholder="Search projects..." 
+                className="w-full bg-gray-900/50 border border-green-900/50 rounded-lg py-2 pl-24 pr-4 text-green-400 focus:outline-none focus:border-green-500 placeholder-green-800"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+            <select 
+              className="bg-gray-900/50 border border-green-900/50 rounded-lg py-2 px-4 text-green-400 focus:outline-none focus:border-green-500 appearance-none min-w-[200px]"
+              value={selectedTech}
+              onChange={(e) => setSelectedTech(e.target.value)}
+            >
+              {allTechStacks.map(tech => (
+                <option key={tech} value={tech}>{tech === 'All' ? '-- Tech Stack --' : tech}</option>
+              ))}
+            </select>
+          </div>
+          
+          <div className="flex flex-wrap gap-2">
+            {allTechStacks.slice(0, 8).map((tech) => (
+              <button
+                key={tech}
+                onClick={() => setSelectedTech(tech)}
+                className={`text-xs px-3 py-1 rounded transition-colors ${selectedTech === tech ? 'bg-green-600 text-black font-bold' : 'bg-green-950/30 border border-green-900/50 text-green-600 hover:bg-green-900/50'}`}
+              >
+                {tech}
+              </button>
+            ))}
+            {allTechStacks.length > 8 && <span className="text-xs text-green-800 py-1">...and more</span>}
+          </div>
+        </div>
 
         {isLoading && (
           <div className="flex justify-center py-20">
@@ -46,12 +116,24 @@ export default function Projects() {
           </div>
         )}
 
+        {!isLoading && filteredProjects.length === 0 && (
+          <div className="text-center py-10 opacity-50">
+            No records matched your query.
+          </div>
+        )}
+
         {/* The Project Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {!isLoading && projects.map((project) => (
-            <article 
+        <motion.div layout className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <AnimatePresence>
+          {!isLoading && filteredProjects.map((project) => (
+            <motion.article 
+              layout
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              transition={{ duration: 0.2 }}
               key={project._id} 
-              className="border border-green-900/50 bg-gray-900/30 rounded-lg overflow-hidden hover:border-green-500/50 transition-colors group"
+              className="flex flex-col border border-green-900/50 bg-gray-900/30 rounded-lg overflow-hidden hover:border-green-500/50 transition-colors group"
             >
               {/* Project Image */}
               {project.imageUrl && (
@@ -107,9 +189,10 @@ export default function Projects() {
                   )}
                 </div>
               </div>
-            </article>
+            </motion.article>
           ))}
-        </div>
+          </AnimatePresence>
+        </motion.div>
 
         {/* Empty State */}
         {!isLoading && projects.length === 0 && !error && (

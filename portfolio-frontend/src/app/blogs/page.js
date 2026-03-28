@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Navbar from "../../components/navbar";
+import Link from "next/link"
 
 export default function Blogs() {
   const [blogs, setBlogs] = useState([]);
@@ -50,9 +51,12 @@ export default function Blogs() {
                     <span key={i} className="text-xs text-green-800 bg-green-950 px-2 py-1">#{tag}</span>
                   ))}
                 </div>
-                <button className="text-sm text-green-400 hover:text-white transition-colors border-b border-transparent hover:border-white">
+                <Link 
+                  href={`/blogs/${blog.slug}`}
+                  className="text-sm text-green-400 hover:text-white transition-colors border-b border-transparent hover:border-white inline-block mt-4"
+                >
                   [ READ_FULL_LOG ]
-                </button>
+                </Link>
               </article>
             ))}
             {blogs.length === 0 && <p className="text-gray-500">No logs found.</p>}
