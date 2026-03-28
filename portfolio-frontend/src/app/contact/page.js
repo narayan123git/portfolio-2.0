@@ -12,19 +12,23 @@ export default function Contact() {
     captchaSum: ''
   });
 
-  const [mathCaptcha, setMathCaptcha] = useState({ num1: 0, num2: 0 });
+  const [mathCaptcha, setMathCaptcha] = useState({ num1: 0, num2: 0, operator: '+', hash: '', expires: '' });
   const [status, setStatus] = useState(null);
 
   useEffect(() => {
-    // Generate random numbers on client side to avoid Next.js hydration errors
-    generateCaptcha();
+    fetchCaptcha();
   }, []);
 
-  const generateCaptcha = () => {
-    setMathCaptcha({
-      num1: Math.floor(Math.random() * 10) + 1,
-      num2: Math.floor(Math.random() * 10) + 1
-    });
+  const fetchCaptcha = async () => {
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/messages/captcha`);
+      const data = await res.json();
+      if (data.success) {
+        setMathCaptcha(data.data);
+      }
+    } catch (err) {
+      console.error("Failed to fetch captcha");
+    }
     setFormData(prev => ({ ...prev, captchaSum: '' }));
   };
 
@@ -37,11 +41,11 @@ export default function Contact() {
     setStatus('Submitting...');
 
     try {
-      // Send the random generated numbers and the user's answer to the server for validation
+      // Send the hash and user's answer to the server for secure validation
       const payload = {
         ...formData,
-        num1: mathCaptcha.num1,
-        num2: mathCaptcha.num2
+        captchaHash: mathCaptcha.hash,
+        captchaExpires: mathCaptcha.expires
       };
 
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/messages`, {
@@ -57,7 +61,7 @@ export default function Contact() {
       if (data.success) {
         setStatus('Message sent successfully!');
         setFormData({ name: '', email: '', message: '', _honeypot: '', captchaSum: '' });
-        generateCaptcha(); // Reset captcha for new messages
+        fetchCaptcha(); // Reset captcha for new messages
       } else {
         setStatus(data.message || 'Something went wrong.');
       }
@@ -143,7 +147,7 @@ export default function Contact() {
             {/* 🤖 Dynamic Math Captcha! Extremely powerful against automated scripts */}
             <div className="flex items-center space-x-4 mb-4">
               <label htmlFor="captchaSum" className="text-sm font-medium text-gray-700 whitespace-nowrap">
-                Verify you are human: <span className="font-bold text-blue-600">{mathCaptcha.num1} + {mathCaptcha.num2} = ?</span>
+                Verify you are human: <span className="font-bold text-blue-600">{mathCaptcha.num1} {mathCaptcha.operator} {mathCaptcha.num2} = ?</span>
               </label>
               <input
                 id="captchaSum"
