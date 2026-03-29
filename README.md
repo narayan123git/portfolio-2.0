@@ -20,8 +20,9 @@
 - Upgraded **Skills Manager**: choosing `Other` now reveals a required details textarea.
 - Fixed public **Projects page** loading issue caused by API response shape mismatch.
 - Simplified Projects discovery UX: removed text search and kept focused filters by **Tech Stack** and **Language**.
-- Expanded Home page content with richer information architecture, portfolio highlights, and a visible admin portal notice.
-- Applied a broader visual redesign (typography, atmospheric background, refined navbar/footer styling).
+- Expanded Home page with featured projects, latest writing, capabilities section, and stronger portfolio storytelling.
+- Applied a full visual refresh with a new global color language, glass-surface cards, and updated shared components.
+- Resume/Drive CV links are handled as external links and always open in a new browser tab.
 
 ---
 

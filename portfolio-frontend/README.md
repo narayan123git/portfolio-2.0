@@ -14,8 +14,10 @@ Next.js 16 frontend for the full-stack portfolio platform. This app renders all 
 
 - Added UI support for admin forgot-password flow.
 - Projects page no longer uses text search; now focuses on stack and language filters.
-- Applied visual redesign updates in global styles, navbar, footer, and home page.
+- Applied visual redesign updates in global styles, navbar, footer, and shared page atmosphere.
 - Added support in skill displays for custom details entered under Other category.
+- Expanded homepage with featured projects, latest writing section, capability highlights, and stronger narrative content.
+- Download CV links now normalize external URLs and open in a new tab for Drive-based resumes.
 
 ## Environment Variables
 
