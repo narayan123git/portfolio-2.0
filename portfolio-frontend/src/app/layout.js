@@ -17,6 +17,50 @@ const jetBrainsMono = JetBrains_Mono({
 export const metadata = {
   title: "Narayan Paul | Engineering Portfolio",
   description: "Secure full-stack portfolio featuring projects, writing, and an admin command center.",
+  applicationName: "Narayan Paul Portfolio",
+  keywords: [
+    "Narayan Paul",
+    "portfolio",
+    "full stack developer",
+    "web development",
+    "software engineer",
+    "next.js",
+    "node.js",
+    "cybersecurity",
+  ],
+  authors: [{ name: "Narayan Paul" }],
+  creator: "Narayan Paul",
+  publisher: "Narayan Paul",
+  category: "technology",
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
+  },
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    title: "Narayan Paul | Engineering Portfolio",
+    description: "Secure full-stack portfolio featuring projects, writing, and an admin command center.",
+    type: "website",
+    locale: "en_US",
+    siteName: "Narayan Paul Portfolio",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Narayan Paul | Engineering Portfolio",
+    description: "Secure full-stack portfolio featuring projects, writing, and an admin command center.",
+  },
+  verification: {
+    google: "W_Jnv4c-3Gy-uMM1gRx5a4yyE8jQ-YAs0LmOuIvk0Ao",
+  },
 };
 
 export default function RootLayout({ children }) {
