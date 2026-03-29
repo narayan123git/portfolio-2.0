@@ -8,11 +8,8 @@ export default function MessageManager() {
 
   const fetchMessages = async () => {
     try {
-      const token = localStorage.getItem('adminToken');
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/messages`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+        credentials: 'include'
       });
       const data = await res.json();
       if (data.success) {
@@ -29,12 +26,9 @@ export default function MessageManager() {
     if (!confirm('Are you sure you want to delete this message?')) return;
     
     try {
-      const token = localStorage.getItem('adminToken');
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/messages/${id}`, {
         method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+        credentials: 'include'
       });
       const data = await res.json();
       if (data.success) {

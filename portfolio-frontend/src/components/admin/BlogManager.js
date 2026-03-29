@@ -36,7 +36,6 @@ export default function BlogManager() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setStatus({ loading: true, message: editingId ? "UPDATING_LOG..." : "WRITING_LOG_TO_DB...", type: "info" });
-    const token = localStorage.getItem("adminToken");
 
     try {
       // Convert comma-separated tags into an array
@@ -52,7 +51,8 @@ export default function BlogManager() {
 
       const res = await fetch(url, {
         method,
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...formData, tags: tagsArray }),
       });
 
@@ -87,12 +87,11 @@ export default function BlogManager() {
   // 4. Handle Delete (Injecting the ID into the URL)
   const handleDelete = async (id) => {
     if (!window.confirm("WARNING: Are you sure you want to permanently delete this log?")) return;
-    
-    const token = localStorage.getItem("adminToken");
+
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/blogs/${id}`, {
         method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` }
+        credentials: "include",
       });
       
       if (res.ok) fetchBlogs(); // Refresh the table

@@ -28,7 +28,6 @@ export default function DiaryManager() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setStatus({ loading: true, message: editingId ? "UPDATING_ENTRY..." : "ENCRYPTING_ENTRY...", type: "info" });
-    const token = localStorage.getItem("adminToken");
 
     try {
       const method = editingId ? "PUT" : "POST";
@@ -38,7 +37,8 @@ export default function DiaryManager() {
 
       const res = await fetch(url, {
         method,
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       });
 
@@ -62,11 +62,10 @@ export default function DiaryManager() {
 
   const handleDelete = async (id) => {
     if (!window.confirm("WARNING: Permanently delete this diary entry?")) return;
-    const token = localStorage.getItem("adminToken");
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/diary/${id}`, {
         method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
+        credentials: "include",
       });
       if (res.ok) fetchEntries();
     } catch (err) {

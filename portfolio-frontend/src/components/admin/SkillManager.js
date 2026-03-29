@@ -2,9 +2,11 @@
 
 import { useState, useEffect } from 'react';
 
+const initialFormState = { name: '', category: 'Frontend', percentage: 50, icon: '', details: '' };
+
 export default function SkillManager() {
   const [skills, setSkills] = useState([]);
-  const [formData, setFormData] = useState({ name: '', category: 'Frontend', percentage: 50, icon: '' });
+  const [formData, setFormData] = useState(initialFormState);
   const [editingId, setEditingId] = useState(null);
   const [loading, setLoading] = useState(false);
 
@@ -29,17 +31,19 @@ export default function SkillManager() {
       : `${process.env.NEXT_PUBLIC_API_URL}/skills`;
 
     try {
-      const token = localStorage.getItem('adminToken');
       const res = await fetch(url, {
         method,
+        credentials: 'include',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Content-Type': 'application/json'
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify({
+          ...formData,
+          details: formData.category === 'Other' ? formData.details : ''
+        })
       });
       if (res.ok) {
-        setFormData({ name: '', category: 'Frontend', percentage: 50, icon: '' });
+        setFormData(initialFormState);
         setEditingId(null);
         fetchSkills();
       }
@@ -51,17 +55,22 @@ export default function SkillManager() {
   };
 
   const handleEdit = (skill) => {
-    setFormData({ name: skill.name, category: skill.category, percentage: skill.percentage, icon: skill.icon });
+    setFormData({
+      name: skill.name,
+      category: skill.category,
+      percentage: skill.percentage,
+      icon: skill.icon,
+      details: skill.details || ''
+    });
     setEditingId(skill._id);
   };
 
   const handleDelete = async (id) => {
     if (!confirm('Delete this skill?')) return;
     try {
-      const token = localStorage.getItem('adminToken');
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/skills/${id}`, {
         method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
+        credentials: 'include'
       });
       if (res.ok) fetchSkills();
     } catch (err) {
@@ -100,12 +109,23 @@ export default function SkillManager() {
             value={formData.icon} onChange={(e) => setFormData({...formData, icon: e.target.value})}
             className="p-2 bg-gray-900 border border-gray-700 rounded text-white w-full" />
         </div>
+
+        {formData.category === 'Other' && (
+          <textarea
+            placeholder="Describe this custom skill in detail (tools, domains, or specific expertise)."
+            value={formData.details}
+            onChange={(e) => setFormData({ ...formData, details: e.target.value })}
+            rows={4}
+            className="p-2 bg-gray-900 border border-gray-700 rounded text-white w-full"
+            required
+          />
+        )}
         
         <button type="submit" disabled={loading} className="w-full bg-green-600 hover:bg-green-700 text-white p-2 rounded">
           {loading ? 'Saving...' : (editingId ? 'Update Skill' : 'Add New Skill')}
         </button>
         {editingId && (
-          <button type="button" onClick={() => { setEditingId(null); setFormData({name: '', category: 'Frontend', percentage: 50, icon: ''}); }} 
+          <button type="button" onClick={() => { setEditingId(null); setFormData(initialFormState); }} 
             className="w-full mt-2 text-gray-400 hover:text-white">Cancel Edit</button>
         )}
       </form>
@@ -116,6 +136,9 @@ export default function SkillManager() {
             <div>
               <p className="font-bold text-green-400">{skill.name}</p>
               <p className="text-xs text-gray-500">{skill.category} • {skill.percentage}%</p>
+              {skill.details && (
+                <p className="text-xs text-gray-400 mt-1 line-clamp-2">{skill.details}</p>
+              )}
             </div>
             <div className="space-x-2">
               <button onClick={() => handleEdit(skill)} className="text-blue-400 hover:text-blue-300">[EDIT]</button>

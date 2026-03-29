@@ -9,9 +9,8 @@ export default function SecurityManager() {
 
   const fetchLogs = async () => {
     try {
-      const token = localStorage.getItem("adminToken");
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/security`, {
-        headers: { Authorization: `Bearer ${token}` }
+        credentials: "include"
       });
       if (res.ok) {
         setLogs(await res.json());
@@ -29,11 +28,10 @@ export default function SecurityManager() {
 
   const handleDelete = async (id) => {
     if (!window.confirm("WARNING: Delete this security log?")) return;
-    const token = localStorage.getItem("adminToken");
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/security/${id}`, {
         method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` }
+        credentials: "include"
       });
       if (res.ok) fetchLogs();
     } catch (err) {
@@ -45,12 +43,11 @@ export default function SecurityManager() {
     if (!window.confirm("CRITICAL WARNING: Are you sure you want to PURGE ALL security logs? This cannot be undone.")) return;
     
     setStatus({ message: "PURGING_SYSTEM_LOGS...", type: "info" });
-    const token = localStorage.getItem("adminToken");
     
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/security`, {
         method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` }
+        credentials: "include"
       });
       
       if (res.ok) {

@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const cookieParser = require('cookie-parser');
 const connectDB = require('./config/db');
 const securityRoutes = require('./routes/securityRoutes');
 
@@ -40,6 +41,7 @@ app.use(cors({
 
 // 3. Parse JSON payloads (Limit size to 10kb to prevent payload overload attacks)
 app.use(express.json({ limit: '10kb' }));
+app.use(cookieParser());
 
 // 4. Sanitize data against NoSQL query injection
 app.use(mongoSanitize());

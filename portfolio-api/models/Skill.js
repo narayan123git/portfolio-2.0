@@ -19,6 +19,10 @@ const skillSchema = new mongoose.Schema({
   icon: {
     type: String, // String representation e.g., 'FaReact' or a URL to an image
     default: ''
+  },
+  details: {
+    type: String,
+    default: ''
   }
 }, { timestamps: true });
 

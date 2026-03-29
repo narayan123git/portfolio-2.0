@@ -14,6 +14,17 @@
 
 ---
 
+## 🆕 Recent Updates (March 2026)
+
+- Added admin **Forgot Password** flow with secure reset key validation.
+- Upgraded **Skills Manager**: choosing `Other` now reveals a required details textarea.
+- Fixed public **Projects page** loading issue caused by API response shape mismatch.
+- Simplified Projects discovery UX: removed text search and kept focused filters by **Tech Stack** and **Language**.
+- Expanded Home page content with richer information architecture, portfolio highlights, and a visible admin portal notice.
+- Applied a broader visual redesign (typography, atmospheric background, refined navbar/footer styling).
+
+---
+
 ## 🌟 What is this?
 
 This is not just a static portfolio. It is a **complete full-stack web application** split into two main parts:
@@ -123,7 +134,7 @@ Accessible at `/admin` — protected behind JWT authentication. Once logged in, 
 | **BlogManager** | Write Markdown blogs with AI-generated 3-point summaries, tags, and read-time |
 | **DiaryManager** | Create private diary entries (visibility-toggled) |
 | **EducationManager** | Manage education timeline entries |
-| **SkillManager** | Add skills with proficiency percentages |
+| **SkillManager** | Add skills with proficiency percentages and optional custom details for `Other` category |
 | **MessageManager** | Read contact messages sent by visitors |
 | **SecurityManager** | View the honeypot security log — trapped IPs & attempted endpoints |
 | **SettingsManager** | Edit hero text, primary accent color, social links, resume URL, and hiring status |
@@ -178,7 +189,8 @@ exit            Close the terminal
 - **Skills Matrix** — live-fetched proficiency bars rendered on the home page.
 - **Education Timeline** — chronological timeline built from the `Education` collection.
 - **Blog Posts** — Markdown-rendered articles with slug-based routing (`/blogs/:slug`), tags, read time, and AI-generated TL;DR summaries.
-- **Project Cards** — filterable by tech stack with search, grayscale-to-color image reveal on hover, and links to GitHub / live demo.
+- **Project Cards** — filterable by tech stack and language, grayscale-to-color image reveal on hover, and links to GitHub / live demo.
+- **Home Experience** — richer hero storytelling, project and skill highlights, and explicit public notice of the private admin portal.
 
 ---
 
@@ -244,6 +256,7 @@ npm install
 PORT=5000
 MONGO_URI=your_mongodb_connection_string
 JWT_SECRET=your_super_secret_key
+ADMIN_RESET_KEY=your_private_admin_reset_key
 CLOUDINARY_CLOUD_NAME=your_cloud_name
 CLOUDINARY_API_KEY=your_api_key
 CLOUDINARY_API_SECRET=your_api_secret
@@ -296,7 +309,11 @@ npm run dev
 ### Authentication
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| `POST` | `/api/auth/login` | Authenticate admin & receive a signed JWT |
+| `POST` | `/api/auth/login` | Authenticate admin and set secure session cookie |
+| `POST` | `/api/auth/logout` | Clear secure admin session cookie |
+| `GET` | `/api/auth/session` | 🔒 Verify active admin session |
+| `POST` | `/api/auth/forgot-password/request-token` | Request one-time reset token using username + server reset key |
+| `POST` | `/api/auth/forgot-password/reset` | Reset password using username + one-time token + new password |
 
 ### Projects
 | Method | Endpoint | Description |

@@ -31,12 +31,11 @@ export default function EducationManager() {
       : `${process.env.NEXT_PUBLIC_API_URL}/education`;
 
     try {
-      const token = localStorage.getItem('adminToken');
       const res = await fetch(url, {
         method,
+        credentials: 'include',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify(formData)
       });
@@ -67,10 +66,9 @@ export default function EducationManager() {
   const handleDelete = async (id) => {
     if (!confirm('Delete this education record?')) return;
     try {
-      const token = localStorage.getItem('adminToken');
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/education/${id}`, {
         method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
+        credentials: 'include'
       });
       if (res.ok) fetchEducation();
     } catch (err) {

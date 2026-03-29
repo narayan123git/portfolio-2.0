@@ -9,8 +9,24 @@ export default function Projects() {
   const [filteredProjects, setFilteredProjects] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
-  const [searchQuery, setSearchQuery] = useState("");
   const [selectedTech, setSelectedTech] = useState("All");
+  const [selectedLanguage, setSelectedLanguage] = useState("All");
+
+  const languageTags = [
+    "JavaScript",
+    "TypeScript",
+    "Python",
+    "Java",
+    "C",
+    "C++",
+    "C#",
+    "Go",
+    "Rust",
+    "PHP",
+    "Ruby",
+    "Swift",
+    "Kotlin"
+  ];
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -18,8 +34,7 @@ export default function Projects() {
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/projects`);
         if (!res.ok) throw new Error("Failed to fetch system records.");
         const data = await res.json();
-        // The API returns { success: true, count: N, data: [...] }
-        const p = data.data || [];
+        const p = Array.isArray(data) ? data : (data.data || []);
         setProjects(p);
         setFilteredProjects(p);
       } catch (err) {
@@ -34,27 +49,31 @@ export default function Projects() {
   // Filter Logic
   useEffect(() => {
     let result = projects;
-    
-    // Search Filter
-    if (searchQuery.trim() !== "") {
-      const q = searchQuery.toLowerCase();
-      result = result.filter(p => 
-        p.title.toLowerCase().includes(q) || 
-        p.description.toLowerCase().includes(q) ||
-        p.techStack.some(t => t.toLowerCase().includes(q))
+
+    // Tech Stack Filter
+    if (selectedTech !== "All") {
+      result = result.filter((p) => (p.techStack || []).includes(selectedTech));
+    }
+
+    if (selectedLanguage !== "All") {
+      result = result.filter((p) =>
+        (p.techStack || []).some((t) => t.toLowerCase() === selectedLanguage.toLowerCase())
       );
     }
     
-    // Tech Stack Filter
-    if (selectedTech !== "All") {
-      result = result.filter(p => p.techStack.includes(selectedTech));
-    }
-    
     setFilteredProjects(result);
-  }, [searchQuery, selectedTech, projects]);
+  }, [selectedTech, selectedLanguage, projects]);
 
   // Extract unique tech stack tags from all projects
-  const allTechStacks = ["All", ...new Set(projects.flatMap(p => p.techStack))].sort();
+  const allTechStacks = ["All", ...new Set(projects.flatMap((p) => p.techStack || []))].sort();
+  const allLanguages = [
+    "All",
+    ...new Set(
+      projects
+        .flatMap((p) => p.techStack || [])
+        .filter((tech) => languageTags.some((lang) => lang.toLowerCase() === tech.toLowerCase()))
+    )
+  ].sort();
 
   return (
     <div className="min-h-screen bg-gray-950 text-green-400 font-mono pb-20">
@@ -66,19 +85,9 @@ export default function Projects() {
           <p className="text-sm text-green-600 mt-2">&gt; Executing query: SELECT * FROM portfolio_projects...</p>
         </header>
 
-        {/* Filter & Search Bar */}
+        {/* Filter Bar */}
         <div className="mb-12 space-y-4">
           <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1 relative">
-              <span className="absolute left-3 top-3 text-green-600">&gt; grep -i</span>
-              <input 
-                type="text" 
-                placeholder="Search projects..." 
-                className="w-full bg-gray-900/50 border border-green-900/50 rounded-lg py-2 pl-24 pr-4 text-green-400 focus:outline-none focus:border-green-500 placeholder-green-800"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
             <select 
               className="bg-gray-900/50 border border-green-900/50 rounded-lg py-2 px-4 text-green-400 focus:outline-none focus:border-green-500 appearance-none min-w-[200px]"
               value={selectedTech}
@@ -86,6 +95,18 @@ export default function Projects() {
             >
               {allTechStacks.map(tech => (
                 <option key={tech} value={tech}>{tech === 'All' ? '-- Tech Stack --' : tech}</option>
+              ))}
+            </select>
+
+            <select
+              className="bg-gray-900/50 border border-green-900/50 rounded-lg py-2 px-4 text-green-400 focus:outline-none focus:border-green-500 appearance-none min-w-[200px]"
+              value={selectedLanguage}
+              onChange={(e) => setSelectedLanguage(e.target.value)}
+            >
+              {allLanguages.map((language) => (
+                <option key={language} value={language}>
+                  {language === 'All' ? '-- Language --' : language}
+                </option>
               ))}
             </select>
           </div>
@@ -118,7 +139,7 @@ export default function Projects() {
 
         {!isLoading && filteredProjects.length === 0 && (
           <div className="text-center py-10 opacity-50">
-            No records matched your query.
+            No records matched selected filters.
           </div>
         )}
 
@@ -155,7 +176,7 @@ export default function Projects() {
 
                 {/* Tech Stack Tags */}
                 <div className="flex flex-wrap gap-2 mb-8">
-                  {project.techStack.map((tech, index) => (
+                  {(project.techStack || []).map((tech, index) => (
                     <span 
                       key={index} 
                       className="text-xs bg-green-950/50 border border-green-900 text-green-500 px-2 py-1 rounded"

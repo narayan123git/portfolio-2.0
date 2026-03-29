@@ -15,19 +15,37 @@ export default function AdminDashboard() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [activeTab, setActiveTab] = useState("projects");
 
-  // 1. The Gatekeeper: Verify the VIP Pass exists
+  // 1. Verify server-side session cookie validity
   useEffect(() => {
-    const token = localStorage.getItem("adminToken");
-    if (!token) {
-      router.push("/admin"); // Kick them out if no token is found
-    } else {
-      setIsAuthenticated(true);
-    }
+    const verifySession = async () => {
+      try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/session`, {
+          credentials: "include",
+        });
+
+        if (res.ok) {
+          setIsAuthenticated(true);
+        } else {
+          router.push("/admin");
+        }
+      } catch (error) {
+        router.push("/admin");
+      }
+    };
+
+    verifySession();
   }, [router]);
 
-  // 2. Secure Logout function
-  const handleLogout = () => {
-    localStorage.removeItem("adminToken"); // Destroy the token
+  // 2. Secure logout function
+  const handleLogout = async () => {
+    try {
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/logout`, {
+        method: "POST",
+        credentials: "include",
+      });
+    } catch (error) {
+      // Redirect anyway to terminate the local admin session view.
+    }
     router.push("/admin"); // Send back to login
   };
 

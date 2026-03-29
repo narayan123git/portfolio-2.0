@@ -37,7 +37,6 @@ export default function ProjectManager() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setStatus({ loading: true, message: editingId ? "UPDATING_RECORD..." : "INITIATING_UPLOAD...", type: "info" });
-    const token = localStorage.getItem("adminToken");
 
     try {
       let imageUrl = formData.imageUrl || ""; // Keep old image if not uploading a new one
@@ -49,7 +48,7 @@ export default function ProjectManager() {
         imageForm.append("image", image);
         const uploadRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/upload`, {
           method: "POST",
-          headers: { Authorization: `Bearer ${token}` },
+          credentials: "include",
           body: imageForm,
         });
         const uploadData = await uploadRes.json();
@@ -72,7 +71,8 @@ export default function ProjectManager() {
 
       const projectRes = await fetch(url, {
         method,
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...formData, techStack: techArray, imageUrl }),
       });
 
@@ -110,12 +110,11 @@ export default function ProjectManager() {
   // 4. Handle Delete
   const handleDelete = async (id) => {
     if (!window.confirm("WARNING: Are you sure you want to permanently delete this record?")) return;
-    
-    const token = localStorage.getItem("adminToken");
+
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/projects/${id}`, {
         method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
+        credentials: "include",
       });
       if (res.ok) fetchProjects(); // Refresh the table instantly
     } catch (err) {

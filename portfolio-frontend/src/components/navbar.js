@@ -22,28 +22,29 @@ export default function Navbar() {
   }, []);
 
   return (
-    <nav className="border-b border-green-900/30 bg-gray-950/80 backdrop-blur-md sticky top-0 z-50">
+    <nav className="border-b border-emerald-900/40 bg-[#071313]/80 backdrop-blur-xl sticky top-0 z-50 shadow-[0_8px_30px_rgba(6,31,27,0.35)]">
       <div className="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center flex-wrap gap-4">
         <div className="flex items-center gap-4">
-          <Link href="/" className="font-mono text-xl font-bold text-white tracking-tighter">
+          <Link href="/" className="mono-ui text-xl font-bold text-white tracking-tight">
             NARAYAN<span style={{ color: settings?.primaryColor || '#22c55e' }}>_PAUL</span>
           </Link>
           
           {settings && (
-            <div className="hidden md:flex items-center gap-2 border border-green-900/50 bg-green-950/30 px-3 py-1 rounded-full">
+            <div className="hidden md:flex items-center gap-2 border border-emerald-900/60 bg-emerald-950/30 px-3 py-1 rounded-full">
               <span className={`w-2 h-2 rounded-full ${settings.isHiring ? 'bg-green-500 animate-pulse' : 'bg-yellow-500'}`}></span>
-              <span className="text-[10px] text-green-400 font-mono tracking-widest uppercase">
+              <span className="text-[10px] text-emerald-300 mono-ui tracking-widest uppercase">
                 {settings.isHiring ? 'AVAILABLE' : 'BUSY'}
               </span>
             </div>
           )}
         </div>
 
-        <div className="space-x-4 md:space-x-8 font-mono text-sm text-green-600">
-          <Link href="/projects" className="hover:text-green-400 transition-colors">[ PROJECTS ]</Link>
-          <Link href="/blogs" className="hover:text-green-400 transition-colors hidden sm:inline">[ BLOGS ]</Link>
-          <Link href="/diary" className="hover:text-green-400 transition-colors hidden sm:inline">[ DIARY ]</Link>
-          <Link href="/contact" className="hover:text-green-400 transition-colors">[ CONTACT ]</Link>
+        <div className="mono-ui space-x-4 md:space-x-8 text-sm text-emerald-300/80">
+          <Link href="/projects" className="hover:text-emerald-200">[ PROJECTS ]</Link>
+          <Link href="/blogs" className="hover:text-emerald-200 hidden sm:inline">[ BLOGS ]</Link>
+          <Link href="/diary" className="hover:text-emerald-200 hidden sm:inline">[ DIARY ]</Link>
+          <Link href="/contact" className="hover:text-emerald-200">[ CONTACT ]</Link>
+          <Link href="/admin" className="hover:text-white border border-emerald-500/40 px-2 py-1 rounded">[ ADMIN ]</Link>
         </div>
       </div>
     </nav>
