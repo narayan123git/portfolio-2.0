@@ -11,6 +11,7 @@ const mongoSanitize = require('express-mongo-sanitize');
 const xss = require('xss-clean');
 const hpp = require('hpp');
 const rateLimit = require('express-rate-limit');
+const jwt = require('jsonwebtoken');
 const honeypot = require('./middleware/honeypot');
 
 // Connect to MongoDB
@@ -52,15 +53,59 @@ app.use(xss());
 // 6. Prevent HTTP Parameter Pollution
 app.use(hpp());
 
-// 7. Global Rate Limiting (Prevents basic DDoS and brute force attacks)
-const limiter = rateLimit({
+// 7. Global Rate Limiting (Strict for public traffic)
+const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 20, // Limit each IP to 20 requests per windowMs
   message: 'Too many requests from this IP, please try again after 15 minutes.',
   standardHeaders: true,
   legacyHeaders: false,
 });
-app.use('/api/', limiter); // Apply rate limiting to all API routes
+
+// 7.1 Higher limit for authenticated admin requests.
+const adminLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 500, // Higher threshold so admin can edit content freely
+  message: 'Too many admin requests from this IP, please try again after 15 minutes.',
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const getAuthToken = (req) => {
+  if (req.cookies && req.cookies.adminToken) {
+    return req.cookies.adminToken;
+  }
+
+  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
+    return req.headers.authorization.split(' ')[1];
+  }
+
+  return null;
+};
+
+const hasValidAdminToken = (req) => {
+  const token = getAuthToken(req);
+  if (!token) {
+    return false;
+  }
+
+  try {
+    jwt.verify(token, process.env.JWT_SECRET);
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+const apiLimiter = (req, res, next) => {
+  if (hasValidAdminToken(req)) {
+    return adminLimiter(req, res, next);
+  }
+
+  return generalLimiter(req, res, next);
+};
+
+app.use('/api/', apiLimiter);
 
 // 8. Strict Rate Limiting for Authentication (Brute force protection)
 const authLimiter = rateLimit({
@@ -68,7 +113,7 @@ const authLimiter = rateLimit({
   max: 10, // Limit each IP to 10 login attempts per 15 mins
   message: 'Too many login attempts. Please try again later.'
 });
-app.use('/api/auth', authLimiter);
+app.use('/api/auth/login', authLimiter);
 
 // 9. Activate the custom Honeypot Trap
 app.use(honeypot);
