@@ -226,6 +226,107 @@ exit            Close the terminal
 
 ---
 
+## Skills Icon Name Reference (Admin)
+
+In the Skills Manager, the Icon field stores a string value (example: FaReact) or a direct image URL.
+
+Current behavior:
+- Icon values are saved in the database.
+- Your current public skills cards do not render icons yet.
+- This reference helps you enter consistent icon names now, so you can render them later without cleanup.
+
+### Common icon names for technologies and tools
+
+Use these names in the Icon field.
+
+#### Frontend
+- FaReact
+- SiNextdotjs
+- SiJavascript
+- SiTypescript
+- SiHtml5
+- SiCss3
+- SiTailwindcss
+- SiRedux
+- SiFramer
+- SiVite
+
+#### Backend
+- FaNodeJs
+- SiExpress
+- SiNestjs
+- SiDjango
+- SiFlask
+- FaJava
+- SiSpring
+- SiDotnet
+- SiGraphql
+- SiSocketdotio
+
+#### Database
+- SiMongodb
+- SiPostgresql
+- SiMysql
+- SiRedis
+- SiFirebase
+- SiSupabase
+- SiSqlite
+- SiPrisma
+- SiMongoose
+
+#### Cloud and DevOps
+- FaDocker
+- SiKubernetes
+- FaAws
+- SiGooglecloud
+- SiVercel
+- SiNetlify
+- SiRender
+- SiGithubactions
+- SiNginx
+- SiCloudinary
+
+#### Tools
+- FaGitAlt
+- FaGithub
+- SiPostman
+- SiInsomnia
+- SiJest
+- SiCypress
+- SiWebpack
+- SiBabel
+- SiEslint
+- SiPrettier
+- SiFigma
+- SiNotion
+- SiSlack
+- SiLinux
+
+### How to find icon names in future
+
+1. Open the React Icons website:
+  - https://react-icons.github.io/react-icons/
+2. Search your technology name (example: Docker, PostgreSQL, Tailwind).
+3. Copy the exact component name shown by the website (example: FaDocker, SiPostgresql).
+4. Paste that exact name into Admin -> Skills -> Icon field.
+
+Notes:
+- Prefix guide: Fa = Font Awesome, Si = Simple Icons, Io = Ionicons, Tb = Tabler, etc.
+- Names are case-sensitive.
+- If you cannot find a good icon, you can paste a direct image URL instead.
+- If multiple icons exist, prefer the official brand icon from the Si set.
+
+### Optional quick validation workflow (before saving many skills)
+
+1. Pick one skill.
+2. Enter icon name from React Icons.
+3. Save and verify in admin data.
+4. Repeat for other skills.
+
+If you want, I can also add a live icon preview in the Skills Manager so you can test icon names instantly while typing.
+
+---
+
 ## 🚀 How to Run the Project Locally
 
 ### Prerequisites

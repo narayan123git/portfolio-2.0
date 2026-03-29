@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Navbar from "../../../components/navbar";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 export default function BlogPost() {
   const { slug } = useParams(); // Grabs the slug from the URL
@@ -65,9 +67,8 @@ export default function BlogPost() {
               </div>
             </header>
 
-            <div className="prose prose-invert prose-green max-w-none text-gray-300 leading-relaxed whitespace-pre-wrap">
-              {/* This renders your text area content while preserving line breaks */}
-              {blog.content}
+            <div className="prose prose-invert prose-green max-w-none text-gray-300 leading-relaxed">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>{blog.content || ""}</ReactMarkdown>
             </div>
           </article>
         )}

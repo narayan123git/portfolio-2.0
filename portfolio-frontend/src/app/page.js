@@ -110,15 +110,15 @@ export default async function Home() {
             <div className="grid sm:grid-cols-3 gap-3 pt-6">
               <div className="rounded-xl surface-card p-4">
                 <p className="mono-ui text-xs text-orange-200/80">PROJECTS_TRACKED</p>
-                <p className="text-2xl font-bold text-white mt-1">{settings?.projectCount || "20+"}</p>
+                <p className="text-2xl font-bold text-white mt-1">{projects.length}</p>
               </div>
               <div className="rounded-xl surface-card p-4">
                 <p className="mono-ui text-xs text-orange-200/80">SKILLS_INDEXED</p>
-                <p className="text-2xl font-bold text-white mt-1">{skills.length || "10+"}</p>
+                <p className="text-2xl font-bold text-white mt-1">{skills.length}</p>
               </div>
               <div className="rounded-xl surface-card p-4">
                 <p className="mono-ui text-xs text-orange-200/80">EDU_MILESTONES</p>
-                <p className="text-2xl font-bold text-white mt-1">{education.length || "3+"}</p>
+                <p className="text-2xl font-bold text-white mt-1">{education.length}</p>
               </div>
             </div>
           </div>
