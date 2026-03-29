@@ -13,7 +13,7 @@ async function getSettings() {
 
 async function getSkills() {
   try {
-    const res = await fetch(`${process.env.INTERNAL_BACKEND_URL || 'http://localhost:5000'}/api/skills`, { cache: 'no-store' });
+    const res = await fetch(`${process.env.INTERNAL_BACKEND_URL }/api/skills`, { cache: 'no-store' });
     const data = await res.json();
     return data.success ? data.data : [];
   } catch (err) { return []; }
