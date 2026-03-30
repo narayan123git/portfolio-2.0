@@ -29,20 +29,39 @@ app.set('trust proxy', 1);
 app.use(helmet());
 
 // 2. Strict CORS Configuration (Only allow your exact frontend domains)
-const allowedOrigins = (process.env.FRONTEND_URL || '')
-  .split(',')
-  .map((origin) => origin.trim())
+const normalizeOrigin = (value = '') => {
+  const trimmed = String(value).trim();
+  if (!trimmed) return '';
+
+  try {
+    // Canonical origin format: protocol + host + optional port (no trailing slash/path)
+    return new URL(trimmed).origin;
+  } catch {
+    // Fallback for malformed env values; still normalize trailing slash.
+    return trimmed.replace(/\/+$/, '');
+  }
+};
+
+const allowedOrigins = [
+  ...(process.env.FRONTEND_URL || '').split(','),
+  ...(process.env.CORS_ORIGINS || '').split(','),
+]
+  .map((origin) => normalizeOrigin(origin))
   .filter(Boolean);
+
+const allowedOriginSet = new Set(allowedOrigins);
 
 app.use(cors({
   origin: function (origin, callback) {
-    // Allow non-browser requests without Origin in development/local contexts.
-    if (!origin && process.env.NODE_ENV !== 'production') {
+    // Allow non-browser requests without Origin header (health checks, server-to-server calls).
+    if (!origin) {
       callback(null, true);
       return;
     }
 
-    if (origin && allowedOrigins.includes(origin)) {
+    const normalizedRequestOrigin = normalizeOrigin(origin);
+
+    if (allowedOriginSet.has(normalizedRequestOrigin)) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
