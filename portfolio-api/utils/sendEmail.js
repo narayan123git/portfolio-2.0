@@ -1,6 +1,5 @@
 const nodemailer = require('nodemailer');
-
-let cachedTransporter = null;
+const dns = require('dns').promises;
 
 const parseBoolean = (value) => String(value).toLowerCase() === 'true';
 
@@ -31,7 +30,16 @@ const getProviderHost = (serviceName = '') => {
   return '';
 };
 
-const buildTransportConfig = () => {
+const resolveSmtpIPv4Host = async (host) => {
+  try {
+    const addresses = await dns.resolve4(host);
+    return addresses[0] || host;
+  } catch {
+    return host;
+  }
+};
+
+const buildTransportConfig = async () => {
   const emailService = process.env.EMAIL_SERVICE || 'gmail';
   const smtpHost = process.env.SMTP_HOST || getProviderHost(emailService);
   const smtpPort = Number(process.env.SMTP_PORT || 587);
@@ -45,14 +53,27 @@ const buildTransportConfig = () => {
   const forceIPv4 = shouldForceIPv4();
 
   if (smtpHost) {
+    let connectionHost = smtpHost;
+    const tlsOptions = {};
+
+    if (forceIPv4) {
+      const ipv4Host = await resolveSmtpIPv4Host(smtpHost);
+      if (ipv4Host !== smtpHost) {
+        connectionHost = ipv4Host;
+        // Preserve TLS cert validation for provider hostname when connecting by IP.
+        tlsOptions.servername = smtpHost;
+      }
+    }
+
     return {
-      host: smtpHost,
+      host: connectionHost,
       port: smtpPort,
       secure,
       connectionTimeout,
       greetingTimeout,
       socketTimeout,
       ...(forceIPv4 ? { family: 4 } : {}),
+      ...(Object.keys(tlsOptions).length > 0 ? { tls: tlsOptions } : {}),
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS,
@@ -74,14 +95,6 @@ const buildTransportConfig = () => {
   };
 };
 
-const getTransporter = () => {
-  if (!cachedTransporter) {
-    cachedTransporter = nodemailer.createTransport(buildTransportConfig());
-  }
-
-  return cachedTransporter;
-};
-
 const assertEmailEnv = () => {
   const missingVars = [];
 
@@ -97,7 +110,8 @@ const assertEmailEnv = () => {
 const sendEmail = async ({ subject, htmlContent }) => {
   assertEmailEnv();
 
-  const transporter = getTransporter();
+  const transportConfig = await buildTransportConfig();
+  const transporter = nodemailer.createTransport(transportConfig);
 
   const mailOptions = {
     from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
@@ -109,23 +123,23 @@ const sendEmail = async ({ subject, htmlContent }) => {
   try {
     return await transporter.sendMail(mailOptions);
   } catch (error) {
-    const transportConfig = transporter?.options || {};
+    const currentTransportConfig = transporter?.options || {};
     console.error('Email send failed:', {
       code: error.code,
       command: error.command,
       response: error.response,
       message: error.message,
-      smtpHost: transportConfig.host || transportConfig.service || 'unknown',
-      smtpPort: transportConfig.port || 'unknown',
-      secure: typeof transportConfig.secure === 'boolean' ? transportConfig.secure : 'unknown',
-      family: transportConfig.family || 'auto',
+      smtpHost: currentTransportConfig.host || currentTransportConfig.service || 'unknown',
+      smtpPort: currentTransportConfig.port || 'unknown',
+      secure: typeof currentTransportConfig.secure === 'boolean' ? currentTransportConfig.secure : 'unknown',
+      family: currentTransportConfig.family || 'auto',
     });
 
     // Retry once with forced IPv4 for network-route issues.
-    if ((error.code === 'ENETUNREACH' || error.code === 'ESOCKET') && transportConfig.family !== 4) {
+    if ((error.code === 'ENETUNREACH' || error.code === 'ESOCKET') && currentTransportConfig.family !== 4) {
       try {
         const retryTransporter = nodemailer.createTransport({
-          ...buildTransportConfig(),
+          ...(await buildTransportConfig()),
           family: 4,
         });
 
