@@ -2,6 +2,18 @@ const nodemailer = require('nodemailer');
 const dns = require('dns').promises;
 
 const RESEND_API_URL = 'https://api.resend.com/emails';
+const PROVIDER_RESEND = 'resend';
+const PROVIDER_SMTP = 'smtp';
+
+const getEmailProvider = () => {
+  const configured = String(process.env.EMAIL_PROVIDER || 'auto').trim().toLowerCase();
+
+  if (configured === PROVIDER_RESEND || configured === PROVIDER_SMTP) {
+    return configured;
+  }
+
+  return process.env.RESEND_API_KEY ? PROVIDER_RESEND : PROVIDER_SMTP;
+};
 
 const parseBoolean = (value) => String(value).toLowerCase() === 'true';
 
@@ -113,11 +125,11 @@ const sendEmailWithResend = async ({ subject, htmlContent }) => {
   const apiKey = process.env.RESEND_API_KEY;
 
   if (!apiKey) {
-    return null;
+    throw new Error('Resend configuration missing: RESEND_API_KEY');
   }
 
   const from = process.env.RESEND_FROM || process.env.EMAIL_FROM || process.env.EMAIL_USER;
-  const to = process.env.RECEIVER_EMAIL;
+  const to = process.env.RESEND_TO || process.env.RECEIVER_EMAIL;
 
   if (!from || !to) {
     throw new Error('Resend configuration missing: RESEND_FROM or RECEIVER_EMAIL');
@@ -146,7 +158,9 @@ const sendEmailWithResend = async ({ subject, htmlContent }) => {
 };
 
 const sendEmail = async ({ subject, htmlContent }) => {
-  if (process.env.RESEND_API_KEY) {
+  const provider = getEmailProvider();
+
+  if (provider === PROVIDER_RESEND) {
     try {
       return await sendEmailWithResend({ subject, htmlContent });
     } catch (error) {
