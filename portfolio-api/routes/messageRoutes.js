@@ -11,7 +11,7 @@ const captchaLimiter = rateLimit({
   max: 30,
   message: { success: false, message: 'Too many captcha requests. Please try again shortly.' },
   standardHeaders: true,
-  legacyHeaders: false
+  legacyHeaders: false,
 });
 
 const submitMessageLimiter = rateLimit({
@@ -28,16 +28,34 @@ router.get('/captcha', captchaLimiter, getCaptcha);
 const validateMessage = [
   body('name').trim().escape().isLength({ min: 2, max: 50 }).withMessage('Name must be between 2 and 50 characters'),
   body('email').isEmail().normalizeEmail().withMessage('Valid email is required'),
-  body('subject').trim().escape().isLength({ max: 100 }).withMessage('Subject is too long'),
+  body('subject').optional({ checkFalsy: true }).trim().escape().isLength({ max: 100 }).withMessage('Subject must be under 100 characters'),
   body('message').trim().escape().isLength({ min: 5, max: 2000 }).withMessage('Message must be between 5 and 2000 characters'),
-  body('captchaText').trim().isLength({ min: 4, max: 8 }).withMessage('Captcha text is required'),
-  body('captchaHash').isString().isLength({ min: 32 }).withMessage('Invalid captcha hash'),
-  body('captchaExpires').isInt({ min: 1 }).withMessage('Invalid captcha expiration'),
+  body('captchaText').optional({ checkFalsy: true }).trim().isLength({ min: 4, max: 8 }).withMessage('Captcha text is required'),
+  body('captchaHash').optional({ checkFalsy: true }).isString().isLength({ min: 32 }).withMessage('Invalid captcha hash'),
+  body('captchaExpires').optional({ checkFalsy: true }).isInt({ min: 1 }).withMessage('Invalid captcha expiration'),
+  body('captchaToken').optional({ checkFalsy: true }).isString().isLength({ min: 16 }).withMessage('Invalid captcha token'),
+  body('honeypot').optional({ checkFalsy: true }).isString().withMessage('Honeypot must be a string'),
+  body('_honeypot').optional({ checkFalsy: true }).isString().withMessage('Honeypot must be a string'),
+  (req, res, next) => {
+    const trapValue = req.body.honeypot ?? req.body._honeypot;
+
+    if (trapValue) {
+      return next();
+    }
+
+    if (!req.body.captchaText || !req.body.captchaHash || !req.body.captchaExpires || !req.body.captchaToken) {
+      return res.status(400).json({
+        success: false,
+        message: 'Captcha is required to submit the form.',
+      });
+    }
+
+    return next();
+  },
   (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-       // Log the failed attempt as a security event could go here
-       return res.status(400).json({ success: false, errors: errors.array() });
+      return res.status(400).json({ success: false, errors: errors.array() });
     }
     next();
   }

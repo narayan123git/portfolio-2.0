@@ -335,6 +335,250 @@ If you want, I can also add a live icon preview in the Skills Manager so you can
 
 ---
 
+## 🔬 Deep-Dive Documentation (Component-by-Component)
+
+This section is intentionally detailed so you can understand exactly how each part behaves, how data moves, and where security is enforced.
+
+### 1. End-to-End Runtime Flow
+
+When a user opens a page:
+
+1. Next.js renders the route (server or client side depending on page).
+2. UI components call API endpoints (through `/api/*` path from browser).
+3. Next.js rewrites/proxies those requests to Express backend.
+4. Express middleware stack executes first (security, parsers, sanitizers, rate limits, honeypot).
+5. Route handler runs controller logic.
+6. Controller reads/writes MongoDB through Mongoose models.
+7. Response comes back as JSON and components render data.
+
+Important: security controls are not in one place only. They are distributed in middleware, controllers, model hooks, validators, and route-level protections.
+
+---
+
+### 2. Frontend Internals (How each major piece works)
+
+#### 2.1 App Router pages
+
+- `src/app/page.js` (Home):
+  - Fetches settings, skills, education, projects, blogs.
+  - Builds hero section, feature cards, skill matrix, and education timeline.
+  - Uses server-side fetching for fast first render.
+
+- `src/app/projects/page.js`:
+  - Fetches project list.
+  - Supports filter by tech stack and language.
+  - Splits output into `ongoing` and `completed` groups using `project.status` first and fallback logic if old records exist.
+
+- `src/app/blogs/page.js`:
+  - Lists blogs with card metadata and tags.
+  - Includes social share actions (X, LinkedIn, WhatsApp, Facebook) and copy-link with visible feedback state.
+
+- `src/app/blogs/[slug]/page.js`:
+  - Fetches one blog by slug.
+  - Renders markdown using `react-markdown` + `remark-gfm`.
+  - Provides GitHub-style content styling and share actions.
+  - Shows `AI Summary` block if present.
+
+- `src/app/contact/page.js`:
+  - Handles visitor message submission.
+  - Requests captcha payload first, then posts message + captcha verification fields.
+  - Works with honeypot protection and backend validation.
+
+- `src/app/diary/page.js`:
+  - Shows diary entries with timeline/date-time format.
+
+- `src/app/admin/*`:
+  - Admin login and dashboard.
+  - Dashboard loads manager modules for all content collections.
+
+#### 2.2 Shared UI components
+
+- `navbar.js` and `Footer.js`:
+  - Fetch settings to show dynamic status/social links/colors.
+  - Includes robust API URL normalization to avoid wrong endpoint shape.
+
+- `HackerMode.js`:
+  - Terminal-like command overlay.
+  - Provides interactive command simulation and admin shortcut.
+
+- `CustomCursor.js`:
+  - Custom pointer effect for stronger visual identity.
+
+- `MagneticButton.js`:
+  - Motion-based hover attraction effect for CTA elements.
+
+#### 2.3 Admin manager components
+
+Each manager implements a similar pattern:
+
+1. Fetch list on mount.
+2. Provide form state for create/edit.
+3. On submit, call `POST` for create or `PUT` for update.
+4. Use `credentials: include` on protected routes.
+5. Refresh list after changes.
+
+Manager-specific responsibilities:
+
+- `ProjectManager`: ordering, visibility, status (ongoing/completed), image upload, tech parsing.
+- `BlogManager`: markdown content, tags, slug, read-time, cover image.
+- `DiaryManager`: dev logs with status and visibility.
+- `EducationManager`: timeline + extended metadata fields.
+- `SkillManager`: percentage/category/details/icon.
+- `SettingsManager`: site text/colors/social/profile media/home video.
+- `MessageManager`: inbox viewer for contact messages.
+- `SecurityManager`: security event log viewer.
+
+---
+
+### 3. Backend Internals (Route -> Controller -> Model)
+
+#### 3.1 Route architecture
+
+Routes in `portfolio-api/routes` are thin and map endpoints to controller functions. Protected mutations (`POST/PUT/DELETE`) are guarded by `protect` middleware where needed.
+
+#### 3.2 Controller responsibilities
+
+- `authController`: login/logout/session check + forgot/reset password operations.
+- `projectController`: public/admin project read and admin CRUD with normalized status + custom ordering.
+- `blogController`: blog CRUD and slug-based fetch.
+- `diaryController`: diary CRUD.
+- `educationController`: education CRUD.
+- `skillController`: skills CRUD.
+- `settingController`: singleton-style site settings document read/update.
+- `messageController`: contact intake, captcha endpoint/verification, logging and message persistence.
+- `securityController`: read security logs.
+
+Controllers do business rules and response shaping. Models define schema constraints and data lifecycle hooks.
+
+#### 3.3 Data model summary
+
+- `Admin`: credentials and auth-related fields.
+- `Project`: title/description/status/order/visibility/tech links/media.
+- `Blog`: markdown content, slug, tags, cover image, aiSummary, publish state.
+- `Diary`: timeline entries and visibility.
+- `Education`: institution, degree, dates + extra metadata (`location`, `specialization`, `boardOrUniversity`, `score`, `activities`).
+- `Skill`: name/category/percentage/icon/details.
+- `Setting`: global site-level configurable values.
+- `Message`: contact submissions.
+- `SecurityLog`: detected suspicious actions/events.
+
+---
+
+### 4. Security Architecture (Detailed)
+
+Security is intentionally layered so one bypass does not compromise the entire app.
+
+#### 4.1 Request hardening chain
+
+Before controller logic, Express applies:
+
+1. Header hardening with `helmet`.
+2. CORS allow-list checks.
+3. JSON body size limits.
+4. NoSQL injection sanitization.
+5. XSS cleaning.
+6. HTTP parameter pollution mitigation.
+7. Global rate limiter.
+8. Route-specific limiters for auth/messages/captcha-sensitive flows.
+9. Honeypot detection for suspicious scanner routes.
+
+#### 4.2 Authentication security
+
+- Admin login uses hashed password verification.
+- Protected routes require auth middleware.
+- Session/token validation occurs before protected controller execution.
+- Auth rate limits reduce brute-force risk.
+
+#### 4.3 Contact form security
+
+- Honeypot field traps bot submissions.
+- Captcha verification includes expiry and anti-replay behavior.
+- Input validation + escaping runs server-side.
+- Message submission rate limiting prevents abuse/spam bursts.
+
+#### 4.4 Security logging + alerting
+
+- Security events are written to `SecurityLog`.
+- Alert emails can be triggered for critical/suspicious events.
+- Daily digest summarizes contact events.
+- Security manager in admin provides visibility for incident review.
+
+#### 4.5 Operational safety notes
+
+- Never commit `.env` files.
+- Use strong `JWT_SECRET` and rotate if exposed.
+- Use app passwords for SMTP providers.
+- Restrict allowed CORS origins to your frontend domain.
+- Run backend behind HTTPS in production.
+
+---
+
+### 5. How key complex features work internally
+
+#### 5.1 Project status + ordering
+
+- `status` is stored as `ongoing` or `completed`.
+- `order` determines rendered sequence.
+- Admin can reorder items and set status explicitly.
+- Public projects page uses status-first grouping with backward-compatible fallback for old records.
+
+#### 5.2 Blog markdown rendering
+
+- Blog content is stored as raw markdown in DB.
+- Detail page renders markdown using `react-markdown` with `remark-gfm`.
+- Custom render components style headings, tables, code blocks, links, lists, and blockquotes.
+
+#### 5.3 Social sharing
+
+- Share links are generated per blog URL.
+- Each platform uses its official URL-based share endpoint.
+- Copy-link action uses clipboard API and temporary UI confirmation.
+
+#### 5.4 Media upload flow
+
+1. Admin selects file in manager form.
+2. Frontend uploads file to upload endpoint as `FormData`.
+3. Backend uploads to Cloudinary.
+4. Cloudinary URL is returned.
+5. URL is saved in relevant document (project/blog/settings).
+
+---
+
+### 6. Debugging playbook for common issues
+
+- Status not changing:
+  - Confirm backend restarted after controller/model changes.
+  - Verify admin `PUT /api/projects/:id` payload includes `status`.
+
+- Settings not loading in navbar/footer:
+  - Verify `NEXT_PUBLIC_API_URL` shape (`/api` vs full host).
+  - Confirm settings endpoint returns JSON, not HTML.
+
+- Email not delivered:
+  - Verify SMTP env values and app password.
+  - Check backend logs for transporter/auth/network errors.
+
+- Share links not opening:
+  - Ensure direct anchor-based share links are used.
+  - Confirm `window.location.origin` or site URL resolves correctly.
+
+---
+
+### 7. Security-first mental model to remember
+
+When you modify this project, always think in this order:
+
+1. Input safety (validation/sanitization).
+2. Access control (is this route protected?).
+3. Abuse control (rate limit/honeypot/captcha).
+4. Data integrity (schema validation/defaults).
+5. Audit visibility (security logs/alerts).
+6. User feedback (clear but non-sensitive errors).
+
+If you follow this order, you can add features without weakening the system.
+
+---
+
 ## 🚀 How to Run the Project Locally
 
 ### Prerequisites

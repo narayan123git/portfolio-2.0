@@ -6,8 +6,13 @@ const { generateSecureCaptcha, verifyCaptcha } = require('../portfolio-api/utils
 // @route   GET /api/messages/captcha
 // @access  Public
 const getCaptcha = (req, res) => {
-  const captchaData = generateSecureCaptcha();
-  res.status(200).json({ success: true, data: captchaData });
+  try {
+    const captchaData = generateSecureCaptcha();
+    res.status(200).json({ success: true, data: captchaData });
+  } catch (error) {
+    console.error('Captcha generation failed:', error.message);
+    res.status(503).json({ success: false, message: 'Captcha service unavailable.' });
+  }
 };
 
 // @desc    Send a new message
@@ -15,43 +20,61 @@ const getCaptcha = (req, res) => {
 // @access  Public
 const sendMessage = async (req, res) => {
   try {
-    const { name, email, message, _honeypot, captchaText, captchaHash, captchaExpires } = req.body;
+    const {
+      name,
+      email,
+      subject,
+      message,
+      honeypot,
+      _honeypot,
+      captchaText,
+      captchaHash,
+      captchaExpires,
+      captchaToken,
+    } = req.body;
+    const honeypotValue = honeypot ?? _honeypot;
 
-    // The Trapdoor Feature
-    if (_honeypot) {
-      const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-      
+    if (honeypotValue) {
+      const ipAddress = req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'Unknown';
+
       await SecurityLog.create({
         eventType: 'HONEYPOT_TRIGGER',
-        ipAddress: ip,
+        ipAddress,
         userAgent: req.headers['user-agent'],
-        details: `Spambot attempted to send a message. Bot name: ${name}, Email: ${email}`
+        details: `Honeypot triggered during contact submission. Name: ${name || 'N/A'}, Email: ${email || 'N/A'}`,
       });
 
       return res.status(200).json({ success: true, message: 'Message sent successfully.' });
     }
 
-    // Dynamic server-side verified image captcha validation
-    if (!verifyCaptcha(captchaText, captchaHash, captchaExpires)) {
-      const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+    if (!verifyCaptcha(captchaText, captchaHash, captchaExpires, captchaToken)) {
+      const ipAddress = req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'Unknown';
       await SecurityLog.create({
         eventType: 'CAPTCHA_FAILED',
-        ipAddress: ip,
+        ipAddress,
         userAgent: req.headers['user-agent'],
-        details: `Failed image captcha. Text provided: ${captchaText}.`
+        details: `Failed image captcha. Text provided: ${captchaText || 'N/A'}.`,
       });
-      return res.status(400).json({ success: false, message: 'Bot protection check failed. Incorrect captcha or captcha expired.' });
+
+      return res.status(400).json({
+        success: false,
+        message: 'Bot protection check failed. Incorrect captcha or captcha expired.',
+      });
     }
 
-    // Validation
     if (!name || !email || !message) {
       return res.status(400).json({ success: false, message: 'Please provide name, email, and message' });
     }
 
+    const resolvedSubject = subject && String(subject).trim().length > 0
+      ? String(subject).trim()
+      : 'Website Inquiry';
+
     const newMessage = await Message.create({
       name,
       email,
-      message
+      subject: resolvedSubject,
+      message,
     });
 
     res.status(201).json({

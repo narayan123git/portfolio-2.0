@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 export default function EducationManager() {
   const [educationList, setEducationList] = useState([]);
   const [formData, setFormData] = useState({ 
-    institution: '', degree: '', startDate: '', endDate: '', description: '', isCurrent: false 
+    institution: '', location: '', degree: '', specialization: '', boardOrUniversity: '', score: '', startDate: '', endDate: '', description: '', activities: '', isCurrent: false 
   });
   const [editingId, setEditingId] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -40,7 +40,7 @@ export default function EducationManager() {
         body: JSON.stringify(formData)
       });
       if (res.ok) {
-        setFormData({ institution: '', degree: '', startDate: '', endDate: '', description: '', isCurrent: false });
+        setFormData({ institution: '', location: '', degree: '', specialization: '', boardOrUniversity: '', score: '', startDate: '', endDate: '', description: '', activities: '', isCurrent: false });
         setEditingId(null);
         fetchEducation();
       }
@@ -54,10 +54,15 @@ export default function EducationManager() {
   const handleEdit = (edu) => {
     setFormData({ 
       institution: edu.institution, 
+      location: edu.location || '',
       degree: edu.degree, 
+      specialization: edu.specialization || '',
+      boardOrUniversity: edu.boardOrUniversity || '',
+      score: edu.score || '',
       startDate: edu.startDate, 
       endDate: edu.endDate || '', 
       description: edu.description || '', 
+      activities: edu.activities || '',
       isCurrent: edu.isCurrent 
     });
     setEditingId(edu._id);
@@ -85,9 +90,25 @@ export default function EducationManager() {
           <input type="text" placeholder="Institution (e.g. NIT Durgapur)" required 
             value={formData.institution} onChange={(e) => setFormData({...formData, institution: e.target.value})}
             className="p-2 bg-gray-900 border border-gray-700 rounded text-white w-full" />
+
+          <input type="text" placeholder="Location (e.g. Durgapur, India)"
+            value={formData.location} onChange={(e) => setFormData({...formData, location: e.target.value})}
+            className="p-2 bg-gray-900 border border-gray-700 rounded text-white w-full" />
             
           <input type="text" placeholder="Degree / Role (e.g. B.Tech in CSE)" required 
             value={formData.degree} onChange={(e) => setFormData({...formData, degree: e.target.value})}
+            className="p-2 bg-gray-900 border border-gray-700 rounded text-white w-full" />
+
+          <input type="text" placeholder="Specialization (e.g. Computer Science)"
+            value={formData.specialization} onChange={(e) => setFormData({...formData, specialization: e.target.value})}
+            className="p-2 bg-gray-900 border border-gray-700 rounded text-white w-full" />
+
+          <input type="text" placeholder="Board / University"
+            value={formData.boardOrUniversity} onChange={(e) => setFormData({...formData, boardOrUniversity: e.target.value})}
+            className="p-2 bg-gray-900 border border-gray-700 rounded text-white w-full" />
+
+          <input type="text" placeholder="Score / CGPA / Percentage"
+            value={formData.score} onChange={(e) => setFormData({...formData, score: e.target.value})}
             className="p-2 bg-gray-900 border border-gray-700 rounded text-white w-full" />
 
           <input type="text" placeholder="Start Date (e.g. Aug 2019)" required 
@@ -112,12 +133,16 @@ export default function EducationManager() {
         <textarea placeholder="Description (Optional)" rows="3"
           value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})}
           className="p-2 bg-gray-900 border border-gray-700 rounded text-white w-full"></textarea>
+
+        <textarea placeholder="Activities / Achievements (Optional)" rows="2"
+          value={formData.activities} onChange={(e) => setFormData({...formData, activities: e.target.value})}
+          className="p-2 bg-gray-900 border border-gray-700 rounded text-white w-full"></textarea>
         
         <button type="submit" disabled={loading} className="w-full bg-blue-600 hover:bg-blue-700 text-white p-2 rounded">
           {loading ? 'Saving...' : (editingId ? 'Update Record' : 'Add Record')}
         </button>
         {editingId && (
-          <button type="button" onClick={() => { setEditingId(null); setFormData({institution:'', degree:'', startDate:'', endDate:'', description:'', isCurrent:false}); }} 
+          <button type="button" onClick={() => { setEditingId(null); setFormData({institution:'', location:'', degree:'', specialization:'', boardOrUniversity:'', score:'', startDate:'', endDate:'', description:'', activities:'', isCurrent:false}); }} 
             className="w-full mt-2 text-gray-400 hover:text-white">Cancel Edit</button>
         )}
       </form>
@@ -127,9 +152,14 @@ export default function EducationManager() {
           <div key={edu._id} className="p-4 bg-gray-900 border border-blue-900/50 rounded flex justify-between items-start">
             <div>
               <h3 className="font-bold text-blue-400 text-lg">{edu.institution}</h3>
+              {edu.location && <p className="text-xs text-gray-500">{edu.location}</p>}
               <p className="text-gray-300">{edu.degree}</p>
+              {edu.specialization && <p className="text-xs text-gray-400">Specialization: {edu.specialization}</p>}
+              {edu.boardOrUniversity && <p className="text-xs text-gray-400">Board/University: {edu.boardOrUniversity}</p>}
+              {edu.score && <p className="text-xs text-emerald-300">Score: {edu.score}</p>}
               <p className="text-xs text-gray-500 mt-1">{edu.startDate} — {edu.isCurrent ? 'Present' : edu.endDate}</p>
               {edu.description && <p className="text-sm text-gray-400 mt-2 whitespace-pre-wrap">{edu.description}</p>}
+              {edu.activities && <p className="text-sm text-blue-200/80 mt-2 whitespace-pre-wrap">Activities: {edu.activities}</p>}
             </div>
             <div className="space-x-2 flex-shrink-0">
               <button onClick={() => handleEdit(edu)} className="text-gray-400 hover:text-white">[EDIT]</button>

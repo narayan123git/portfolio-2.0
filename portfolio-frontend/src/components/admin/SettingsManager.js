@@ -20,7 +20,16 @@ export default function SettingsManager() {
 
   const fetchSettings = async () => {
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/settings`);
+      const apiBase = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000').replace(/\/$/, '');
+      const settingsUrl = apiBase.endsWith('/api') ? `${apiBase}/settings` : `${apiBase}/api/settings`;
+      const res = await fetch(settingsUrl, { headers: { Accept: 'application/json' } });
+      if (!res.ok) {
+        throw new Error(`Settings request failed with status ${res.status}`);
+      }
+      const contentType = res.headers.get('content-type') || '';
+      if (!contentType.includes('application/json')) {
+        throw new Error('Settings endpoint did not return JSON');
+      }
       const data = await res.json();
       if (data.success && data.data) {
         setSettings(data.data);
@@ -77,7 +86,9 @@ export default function SettingsManager() {
         homeVideoUrl = uploadVideoData.videoUrl;
       }
 
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/settings`, {
+      const apiBase = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000').replace(/\/$/, '');
+      const settingsUrl = apiBase.endsWith('/api') ? `${apiBase}/settings` : `${apiBase}/api/settings`;
+      const res = await fetch(settingsUrl, {
         method: 'PUT',
         credentials: 'include',
         headers: {

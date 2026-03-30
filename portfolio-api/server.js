@@ -13,7 +13,7 @@ const hpp = require('hpp');
 const rateLimit = require('express-rate-limit');
 const jwt = require('jsonwebtoken');
 const honeypot = require('./middleware/honeypot');
-const { startDailyMessageDigestJob } = require('./jobs/dailyMessageDigestJob');
+const { startCronJobs } = require('./utils/cronJobs');
 
 // Connect to MongoDB
 connectDB();
@@ -138,7 +138,7 @@ app.get('/', (req, res) => res.send('Portfolio API is secured and running.'));
 // A fake route just to test the trap easily in your browser
 app.get('/wp-admin', (req, res) => res.send('This should be trapped.')); 
 
-startDailyMessageDigestJob();
+startCronJobs();
 
 const PORT = process.env.PORT || 5000;
 

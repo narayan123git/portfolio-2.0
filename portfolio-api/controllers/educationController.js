@@ -30,7 +30,7 @@ const createEducation = async (req, res) => {
 const updateEducation = async (req, res) => {
   try {
     const education = await Education.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
+      returnDocument: 'after',
       runValidators: true
     });
     if (!education) return res.status(404).json({ success: false, message: 'Education record not found' });

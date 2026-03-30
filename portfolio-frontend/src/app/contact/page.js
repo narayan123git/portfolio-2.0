@@ -7,12 +7,13 @@ export default function Contact() {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
+    subject: '',
     message: '',
-    _honeypot: '', // This is the trapdoor field!
+    _honeypot: '',
     captchaText: ''
   });
 
-  const [imageCaptcha, setImageCaptcha] = useState({ svg: '', hash: '', expires: '' });
+  const [imageCaptcha, setImageCaptcha] = useState({ svg: '', hash: '', expires: '', token: '' });
   const [status, setStatus] = useState({ type: '', message: '' });
   const [submitting, setSubmitting] = useState(false);
 
@@ -26,10 +27,10 @@ export default function Contact() {
         setStatus({ type: 'error', message: 'Unable to load captcha. Please refresh the page.' });
       }
     } catch (err) {
-      console.error("Failed to fetch captcha");
+      console.error('Failed to fetch captcha');
       setStatus({ type: 'error', message: 'Network error while loading captcha.' });
     }
-    setFormData(prev => ({ ...prev, captchaText: '' }));
+    setFormData((prev) => ({ ...prev, captchaText: '' }));
   };
 
   useEffect(() => {
@@ -46,11 +47,11 @@ export default function Contact() {
     setStatus({ type: 'info', message: 'Submitting...' });
 
     try {
-      // Send the hash and user's answer to the server for secure validation
       const payload = {
         ...formData,
         captchaHash: imageCaptcha.hash,
-        captchaExpires: imageCaptcha.expires
+        captchaExpires: imageCaptcha.expires,
+        captchaToken: imageCaptcha.token
       };
 
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/messages`, {
@@ -65,8 +66,8 @@ export default function Contact() {
 
       if (res.ok && data.success) {
         setStatus({ type: 'success', message: data.message || 'Message sent successfully!' });
-        setFormData({ name: '', email: '', message: '', _honeypot: '', captchaText: '' });
-        fetchCaptcha(); // Reset captcha for new messages
+        setFormData({ name: '', email: '', subject: '', message: '', _honeypot: '', captchaText: '' });
+        fetchCaptcha();
       } else {
         const serverMessage = data.message || 'Unable to send message. Please check your inputs and try again.';
         setStatus({ type: 'error', message: serverMessage });
@@ -87,21 +88,18 @@ export default function Contact() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,#1d4ed8_0%,#0f172a_38%,#020617_100%)] flex flex-col text-slate-100 pb-16">
       <Navbar />
-      <main className="flex-grow flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-md w-full space-y-8 bg-white p-10 rounded-xl shadow-lg">
-          <div>
-            <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-              Get In Touch
-            </h2>
-            <p className="mt-2 text-center text-sm text-gray-600">
-              I&apos;d love to hear from you. Drop me a line below!
+      <main className="flex-grow flex items-center justify-center py-16 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-2xl w-full rounded-3xl border border-sky-300/20 bg-slate-900/70 p-8 sm:p-10 shadow-[0_24px_80px_rgba(2,132,199,0.18)] backdrop-blur-sm">
+          <div className="mb-7">
+            <h2 className="text-3xl sm:text-4xl font-semibold text-sky-100 tracking-tight">Let&apos;s Build Something Bold</h2>
+            <p className="mt-2 text-sm text-slate-300">
+              Send your idea, project brief, or collaboration note. I usually reply quickly.
             </p>
           </div>
-          <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-            
-            {/* 🛡️ TRAPDOOR HONEYPOT FIELD - Hidden from users, visible to bots */}
+
+          <form className="space-y-5" onSubmit={handleSubmit}>
             <div className="absolute left-[-9999px] top-[-9999px]" tabIndex="-1" aria-hidden="true">
               <label htmlFor="_honeypot">Don&apos;t fill this out if you&apos;re human:</label>
               <input
@@ -114,68 +112,68 @@ export default function Contact() {
                 onChange={handleChange}
               />
             </div>
-            {/* ------------------------------------------------------------- */}
 
-            <div className="rounded-md shadow-sm -space-y-px">
-              <div className="mb-4">
-                <label htmlFor="name" className="sr-only">Name</label>
-                <input
-                  id="name"
-                  name="name"
-                  type="text"
-                  required
-                  className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                  placeholder="Your Name"
-                  value={formData.name}
-                  onChange={handleChange}
-                />
-              </div>
-              <div className="mb-4">
-                <label htmlFor="email" className="sr-only">Email address</label>
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  required
-                  className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                  placeholder="Email address"
-                  value={formData.email}
-                  onChange={handleChange}
-                />
-              </div>
-              <div className="mb-4">
-                <label htmlFor="message" className="sr-only">Message</label>
-                <textarea
-                  id="message"
-                  name="message"
-                  required
-                  rows="4"
-                  className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                  placeholder="Your Message"
-                  value={formData.message}
-                  onChange={handleChange}
-                ></textarea>
-              </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <input
+                id="name"
+                name="name"
+                type="text"
+                required
+                className="w-full rounded-xl border border-slate-600 bg-slate-950/70 px-4 py-3 text-slate-100 placeholder-slate-400 focus:outline-none focus:border-sky-300"
+                placeholder="Your Name"
+                value={formData.name}
+                onChange={handleChange}
+              />
+              <input
+                id="email"
+                name="email"
+                type="email"
+                autoComplete="email"
+                required
+                className="w-full rounded-xl border border-slate-600 bg-slate-950/70 px-4 py-3 text-slate-100 placeholder-slate-400 focus:outline-none focus:border-sky-300"
+                placeholder="Email Address"
+                value={formData.email}
+                onChange={handleChange}
+              />
             </div>
 
-            {/* Image CAPTCHA */}
-            <div className="mb-4">
-              <label htmlFor="captchaText" className="block text-sm font-medium text-gray-700 mb-2">
+            <input
+              id="subject"
+              name="subject"
+              type="text"
+              className="w-full rounded-xl border border-slate-600 bg-slate-950/70 px-4 py-3 text-slate-100 placeholder-slate-400 focus:outline-none focus:border-sky-300"
+              placeholder="Subject (optional)"
+              value={formData.subject}
+              onChange={handleChange}
+            />
+
+            <textarea
+              id="message"
+              name="message"
+              required
+              rows="5"
+              className="w-full rounded-xl border border-slate-600 bg-slate-950/70 px-4 py-3 text-slate-100 placeholder-slate-400 focus:outline-none focus:border-sky-300"
+              placeholder="Tell me about your idea..."
+              value={formData.message}
+              onChange={handleChange}
+            ></textarea>
+
+            <div className="rounded-2xl border border-slate-700 bg-slate-950/60 p-4">
+              <label htmlFor="captchaText" className="block text-sm font-medium text-slate-200 mb-3">
                 Verify you are human
               </label>
-              <div className="flex items-center gap-3 mb-2">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-3">
                 <div
-                  className="border border-gray-300 rounded-md px-2 py-1 bg-gray-100"
+                  className="inline-flex border border-slate-600 rounded-lg px-3 py-2 bg-slate-900"
                   aria-label="captcha image"
                   dangerouslySetInnerHTML={{ __html: imageCaptcha.svg || '' }}
                 />
                 <button
                   type="button"
                   onClick={fetchCaptcha}
-                  className="px-3 py-2 text-sm rounded-md border border-gray-300 text-gray-700 hover:bg-gray-100"
+                  className="px-3 py-2 text-sm rounded-lg border border-slate-500 text-slate-200 hover:bg-slate-800 transition-colors"
                 >
-                  Refresh
+                  Refresh CAPTCHA
                 </button>
               </div>
               <input
@@ -183,7 +181,7 @@ export default function Contact() {
                 name="captchaText"
                 type="text"
                 required
-                className="appearance-none block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                className="w-full rounded-xl border border-slate-600 bg-slate-900 px-4 py-3 text-slate-100 placeholder-slate-400 focus:outline-none focus:border-sky-300"
                 placeholder="Enter the text from the image"
                 value={formData.captchaText}
                 onChange={handleChange}
@@ -191,20 +189,18 @@ export default function Contact() {
             </div>
 
             {status.message && (
-              <p className={`text-center text-sm ${status.type === 'success' ? 'text-green-600' : status.type === 'info' ? 'text-blue-600' : 'text-red-500'}`}>
+              <p className={`text-sm ${status.type === 'success' ? 'text-emerald-300' : status.type === 'info' ? 'text-sky-300' : 'text-rose-300'}`}>
                 {status.message}
               </p>
             )}
 
-            <div>
-              <button
-                type="submit"
-                disabled={submitting}
-                className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
-              >
-                {submitting ? 'Sending...' : 'Send Message'}
-              </button>
-            </div>
+            <button
+              type="submit"
+              disabled={submitting}
+              className="w-full rounded-xl border border-sky-300/40 bg-gradient-to-r from-sky-500 to-cyan-400 text-slate-950 font-semibold py-3 hover:brightness-110 transition-all disabled:opacity-70"
+            >
+              {submitting ? 'Sending...' : 'Send Message'}
+            </button>
           </form>
         </div>
       </main>

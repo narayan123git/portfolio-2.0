@@ -30,7 +30,7 @@ exports.updateEntry = async (req, res) => {
     const updatedEntry = await Diary.findByIdAndUpdate(
       req.params.id,
       req.body,
-      { new: true }
+      { returnDocument: 'after' }
     );
     if (!updatedEntry) return res.status(404).json({ message: 'Entry not found' });
     res.json(updatedEntry);

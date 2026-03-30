@@ -323,12 +323,33 @@ export default async function Home() {
               <div key={edu._id} className="relative">
                 <div className="absolute -left-[29px] top-1 w-3 h-3 bg-[#0a0f1d] border-2 border-orange-300 rounded-full"></div>
                 <h3 className="text-xl text-white font-bold">{edu.institution}</h3>
+                {edu.location && <p className="text-slate-300/70 text-xs">{edu.location}</p>}
                 <p className="text-orange-200 mono-ui text-sm">{edu.degree}</p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {edu.specialization && (
+                    <span className="mono-ui text-[10px] px-2 py-1 border border-blue-300/30 rounded-full text-blue-100/90 bg-blue-500/10">
+                      {edu.specialization}
+                    </span>
+                  )}
+                  {edu.boardOrUniversity && (
+                    <span className="mono-ui text-[10px] px-2 py-1 border border-blue-300/30 rounded-full text-blue-100/90 bg-blue-500/10">
+                      {edu.boardOrUniversity}
+                    </span>
+                  )}
+                  {edu.score && (
+                    <span className="mono-ui text-[10px] px-2 py-1 border border-emerald-300/40 rounded-full text-emerald-100 bg-emerald-500/10">
+                      {edu.score}
+                    </span>
+                  )}
+                </div>
                 <p className="text-slate-100/55 text-xs mt-1 mb-3">
                   {edu.startDate} - {edu.isCurrent ? <span className="text-orange-200 animate-pulse">Present</span> : edu.endDate}
                 </p>
                 {edu.description && (
                   <p className="text-slate-100/75 text-sm whitespace-pre-wrap">{edu.description}</p>
+                )}
+                {edu.activities && (
+                  <p className="text-slate-200/70 text-xs whitespace-pre-wrap mt-2">Activities: {edu.activities}</p>
                 )}
               </div>
             ))}

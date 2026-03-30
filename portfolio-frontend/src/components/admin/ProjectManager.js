@@ -6,10 +6,17 @@ export default function ProjectManager() {
   const [projects, setProjects] = useState([]);
   const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({
-    title: "", description: "", techStack: "", githubLink: "", liveLink: "", isVisible: true,
+    title: "", description: "", status: "ongoing", techStack: "", githubLink: "", liveLink: "", isVisible: true, order: 0
   });
   const [image, setImage] = useState(null);
   const [status, setStatus] = useState({ loading: false, message: "", type: "" });
+
+  const getEffectiveStatus = (project) => {
+    const explicit = String(project?.status || project?.completionStatus || "").toLowerCase();
+    if (explicit === "completed" || explicit === "done") return "completed";
+    if (explicit === "ongoing" || explicit === "in-progress") return "ongoing";
+    return project?.liveLink ? "completed" : "ongoing";
+  };
 
   // 1. Fetch existing records on load (with ?all=true to see hidden ones)
   const fetchProjects = async () => {
@@ -80,7 +87,7 @@ export default function ProjectManager() {
 
       // Success Reset
       setStatus({ loading: false, message: editingId ? "RECORD_UPDATED" : "RECORD_SAVED", type: "success" });
-      setFormData({ title: "", description: "", techStack: "", githubLink: "", liveLink: "", isVisible: true });
+      setFormData({ title: "", description: "", status: "ongoing", techStack: "", githubLink: "", liveLink: "", isVisible: true, order: 0 });
       setImage(null);
       setEditingId(null);
       fetchProjects(); // Refresh the data table instantly
@@ -98,13 +105,54 @@ export default function ProjectManager() {
     setFormData({
       title: project.title,
       description: project.description,
-      techStack: project.techStack.join(", "), // Convert array back to string for input
+      status: getEffectiveStatus(project),
+      techStack: project.techStack.join(", "),
       githubLink: project.githubLink || "",
       liveLink: project.liveLink || "",
       isVisible: project.isVisible ?? true,
-      imageUrl: project.imageUrl, // Store existing URL
+      imageUrl: project.imageUrl,
+      order: project.order || 0
     });
-    window.scrollTo({ top: 0, behavior: "smooth" }); // Scroll up to form smoothly
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  // 3b. Handle reordering (move up/down)
+  const handleReorder = async (projectId, direction) => {
+    try {
+      const currentProject = projects.find(p => p._id === projectId);
+      if (!currentProject) return;
+
+      const sorted = [...projects].sort((a, b) => a.order - b.order);
+      const currentIndex = sorted.findIndex(p => p._id === projectId);
+      
+      if ((direction === "up" && currentIndex === 0) || (direction === "down" && currentIndex === sorted.length - 1)) {
+        setStatus({ loading: false, message: "CANNOT_REORDER: Already at boundary", type: "error" });
+        setTimeout(() => setStatus({ loading: false, message: "", type: "" }), 2000);
+        return;
+      }
+
+      const swapProject = direction === "up" ? sorted[currentIndex - 1] : sorted[currentIndex + 1];
+      
+      // Swap order values
+      const tempOrder = currentProject.order;
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/projects/${currentProject._id}`, {
+        method: "PUT",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...currentProject, order: swapProject.order })
+      });
+
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/projects/${swapProject._id}`, {
+        method: "PUT",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...swapProject, order: tempOrder })
+      });
+
+      fetchProjects();
+    } catch (err) {
+      console.error("Reorder failed", err);
+    }
   };
 
   // 4. Handle Delete
@@ -116,7 +164,7 @@ export default function ProjectManager() {
         method: "DELETE",
         credentials: "include",
       });
-      if (res.ok) fetchProjects(); // Refresh the table instantly
+      if (res.ok) fetchProjects();
     } catch (err) {
       console.error("Delete failed", err);
     }
@@ -147,6 +195,19 @@ export default function ProjectManager() {
           <textarea name="description" value={formData.description} onChange={handleInputChange} required rows="4" className="w-full bg-gray-950 border border-green-900 rounded p-2 text-sm text-green-400 focus:outline-none focus:border-green-400" />
         </div>
 
+        <div>
+          <label className="block text-xs text-green-600 mb-1">Project Status</label>
+          <select
+            name="status"
+            value={formData.status}
+            onChange={handleInputChange}
+            className="w-full bg-gray-950 border border-green-900 rounded p-2 text-sm text-green-400 focus:outline-none focus:border-green-400"
+          >
+            <option value="ongoing">Ongoing</option>
+            <option value="completed">Completed</option>
+          </select>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-xs text-green-600 mb-1">GitHub URL</label>
@@ -156,6 +217,11 @@ export default function ProjectManager() {
             <label className="block text-xs text-green-600 mb-1">Live URL (Optional)</label>
             <input type="url" name="liveLink" value={formData.liveLink} onChange={handleInputChange} className="w-full bg-gray-950 border border-green-900 rounded p-2 text-sm text-green-400 focus:outline-none focus:border-green-400" />
           </div>
+        </div>
+
+        <div>
+          <label className="block text-xs text-green-600 mb-1">Display Order (Lower number = shown first)</label>
+          <input type="number" name="order" value={formData.order} onChange={handleInputChange} className="w-full bg-gray-950 border border-green-900 rounded p-2 text-sm text-green-400 focus:outline-none focus:border-green-400" />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center border border-green-900/50 p-4 rounded bg-gray-950/30">
@@ -174,24 +240,31 @@ export default function ProjectManager() {
             {status.loading ? "PROCESSING..." : editingId ? "EXECUTE_UPDATE" : "EXECUTE_INSERT"}
           </button>
           {editingId && (
-            <button type="button" onClick={() => { setEditingId(null); setFormData({ title: "", description: "", techStack: "", githubLink: "", liveLink: "", isVisible: true }); setImage(null); }} className="flex-1 bg-gray-900 hover:bg-gray-800 border border-gray-500 text-gray-400 font-bold py-2 px-4 rounded transition-all mt-4">
+            <button type="button" onClick={() => { setEditingId(null); setFormData({ title: "", description: "", status: "ongoing", techStack: "", githubLink: "", liveLink: "", isVisible: true, order: 0 }); setImage(null); }} className="flex-1 bg-gray-900 hover:bg-gray-800 border border-gray-500 text-gray-400 font-bold py-2 px-4 rounded transition-all mt-4">
               CANCEL_EDIT
             </button>
           )}
         </div>
       </form>
 
-      {/* EXISTING RECORDS TABLE */}
       <div>
-        <h3 className="text-lg font-bold text-white mb-4">SYSTEM_RECORDS ({projects.length})</h3>
+        <h3 className="text-lg font-bold text-white mb-4">SYSTEM_RECORDS ({projects.length}) - Sorted by Order</h3>
         <div className="space-y-3">
-          {projects.map((project) => (
+          {[...projects].sort((a, b) => a.order - b.order).map((project) => (
             <div key={project._id} className="flex justify-between items-center p-4 border border-green-900/30 bg-gray-950 rounded hover:border-green-500/30 transition-colors">
-              <div>
+              <div className="flex-1">
                 <p className="text-white font-bold">{project.title}</p>
                 <p className="text-xs text-green-600 truncate max-w-md">{project.description}</p>
+                <p className="text-xs mt-1">
+                  <span className={`px-2 py-0.5 rounded-full border ${getEffectiveStatus(project) === "completed" ? "text-emerald-300 border-emerald-700/60 bg-emerald-900/20" : "text-amber-300 border-amber-700/60 bg-amber-900/20"}`}>
+                    {getEffectiveStatus(project).toUpperCase()}
+                  </span>
+                </p>
+                <p className="text-xs text-gray-500 mt-1">Order: {project.order}</p>
               </div>
-              <div className="flex gap-3">
+              <div className="flex gap-2 flex-col sm:flex-row">
+                <button onClick={() => handleReorder(project._id, "up")} className="text-blue-500 hover:text-blue-400 text-xs border border-blue-900/50 px-2 py-1 bg-blue-950/20 rounded">↑ UP</button>
+                <button onClick={() => handleReorder(project._id, "down")} className="text-blue-500 hover:text-blue-400 text-xs border border-blue-900/50 px-2 py-1 bg-blue-950/20 rounded">↓ DOWN</button>
                 <button onClick={() => handleEdit(project)} className="text-yellow-500 hover:text-yellow-400 text-sm border border-yellow-900/50 px-3 py-1 bg-yellow-950/20 rounded">
                   [ EDIT ]
                 </button>

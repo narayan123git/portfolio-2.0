@@ -5,9 +5,21 @@ const educationSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  location: {
+    type: String,
+  },
   degree: {
     type: String,
     required: true,
+  },
+  specialization: {
+    type: String,
+  },
+  boardOrUniversity: {
+    type: String,
+  },
+  score: {
+    type: String,
   },
   startDate: {
     type: String,
@@ -21,6 +33,9 @@ const educationSchema = new mongoose.Schema({
     default: false,
   },
   description: {
+    type: String,
+  },
+  activities: {
     type: String,
   }
 }, { timestamps: true });
