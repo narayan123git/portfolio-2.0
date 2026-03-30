@@ -4,6 +4,15 @@ let cachedTransporter = null;
 
 const parseBoolean = (value) => String(value).toLowerCase() === 'true';
 
+const shouldForceIPv4 = () => {
+  // Default to IPv4 in production because many cloud runtimes have incomplete IPv6 egress.
+  if (typeof process.env.SMTP_FORCE_IPV4 === 'string') {
+    return parseBoolean(process.env.SMTP_FORCE_IPV4);
+  }
+
+  return process.env.NODE_ENV === 'production';
+};
+
 const getProviderHost = (serviceName = '') => {
   const normalized = String(serviceName).toLowerCase();
 
@@ -33,6 +42,8 @@ const buildTransportConfig = () => {
   const greetingTimeout = Number(process.env.SMTP_GREETING_TIMEOUT || 10000);
   const socketTimeout = Number(process.env.SMTP_SOCKET_TIMEOUT || 20000);
 
+  const forceIPv4 = shouldForceIPv4();
+
   if (smtpHost) {
     return {
       host: smtpHost,
@@ -41,6 +52,7 @@ const buildTransportConfig = () => {
       connectionTimeout,
       greetingTimeout,
       socketTimeout,
+      ...(forceIPv4 ? { family: 4 } : {}),
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS,
@@ -54,6 +66,7 @@ const buildTransportConfig = () => {
     connectionTimeout,
     greetingTimeout,
     socketTimeout,
+    ...(forceIPv4 ? { family: 4 } : {}),
     auth: {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASS,
@@ -105,7 +118,29 @@ const sendEmail = async ({ subject, htmlContent }) => {
       smtpHost: transportConfig.host || transportConfig.service || 'unknown',
       smtpPort: transportConfig.port || 'unknown',
       secure: typeof transportConfig.secure === 'boolean' ? transportConfig.secure : 'unknown',
+      family: transportConfig.family || 'auto',
     });
+
+    // Retry once with forced IPv4 for network-route issues.
+    if ((error.code === 'ENETUNREACH' || error.code === 'ESOCKET') && transportConfig.family !== 4) {
+      try {
+        const retryTransporter = nodemailer.createTransport({
+          ...buildTransportConfig(),
+          family: 4,
+        });
+
+        return await retryTransporter.sendMail(mailOptions);
+      } catch (retryError) {
+        console.error('Email retry with IPv4 failed:', {
+          code: retryError.code,
+          command: retryError.command,
+          response: retryError.response,
+          message: retryError.message,
+        });
+        throw retryError;
+      }
+    }
+
     throw error;
   }
 };
