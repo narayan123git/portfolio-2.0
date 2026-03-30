@@ -1,10 +1,33 @@
 const Admin = require('../models/Admin');
+const SecurityLog = require('../models/SecurityLog');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 
 const RESET_FAILURE_MESSAGE = 'Unable to reset password. Check your details and try again.';
 const RESET_TOKEN_TTL_MS = 10 * 60 * 1000;
+
+const getRequestIp = (req) => {
+  const forwarded = req.headers['x-forwarded-for'];
+  if (typeof forwarded === 'string' && forwarded.length > 0) {
+    return forwarded.split(',')[0].trim();
+  }
+
+  return req.ip || req.socket?.remoteAddress || 'Unknown';
+};
+
+const logFailedLoginAttempt = async (req, username, reason) => {
+  try {
+    await SecurityLog.create({
+      eventType: 'FAILED_LOGIN',
+      ipAddress: getRequestIp(req),
+      userAgent: req.headers['user-agent'] || 'Unknown',
+      details: `Failed admin login for username: ${username || 'N/A'}. Reason: ${reason}.`,
+    });
+  } catch (error) {
+    console.error('Failed to persist failed-login security log:', error.message);
+  }
+};
 
 const buildCookieOptions = () => ({
   httpOnly: true,
@@ -40,15 +63,22 @@ exports.login = async (req, res) => {
     const { username, password } = req.body;
     const normalizedUsername = typeof username === 'string' ? username.trim() : '';
 
+    if (!normalizedUsername || !password) {
+      await logFailedLoginAttempt(req, normalizedUsername, 'Missing username or password');
+      return res.status(400).json({ message: 'Username and password are required.' });
+    }
+
     // 1. Check if admin exists
     const admin = await Admin.findOne({ username: normalizedUsername });
     if (!admin) {
+      await logFailedLoginAttempt(req, normalizedUsername, 'User not found');
       return res.status(401).json({ message: 'Invalid credentials. Intrusion logged.' });
     }
 
     // 2. Verify password
     const isMatch = await bcrypt.compare(password, admin.passwordHash);
     if (!isMatch) {
+      await logFailedLoginAttempt(req, normalizedUsername, 'Password mismatch');
       return res.status(401).json({ message: 'Invalid credentials. Intrusion logged.' });
     }
 

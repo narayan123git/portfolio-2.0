@@ -13,11 +13,8 @@ export default function Contact() {
   });
 
   const [imageCaptcha, setImageCaptcha] = useState({ svg: '', hash: '', expires: '' });
-  const [status, setStatus] = useState(null);
-
-  useEffect(() => {
-    fetchCaptcha();
-  }, []);
+  const [status, setStatus] = useState({ type: '', message: '' });
+  const [submitting, setSubmitting] = useState(false);
 
   const fetchCaptcha = async () => {
     try {
@@ -25,12 +22,19 @@ export default function Contact() {
       const data = await res.json();
       if (data.success) {
         setImageCaptcha(data.data);
+      } else {
+        setStatus({ type: 'error', message: 'Unable to load captcha. Please refresh the page.' });
       }
     } catch (err) {
       console.error("Failed to fetch captcha");
+      setStatus({ type: 'error', message: 'Network error while loading captcha.' });
     }
     setFormData(prev => ({ ...prev, captchaText: '' }));
   };
+
+  useEffect(() => {
+    fetchCaptcha();
+  }, []);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -38,7 +42,8 @@ export default function Contact() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setStatus('Submitting...');
+    setSubmitting(true);
+    setStatus({ type: 'info', message: 'Submitting...' });
 
     try {
       // Send the hash and user's answer to the server for secure validation
@@ -56,18 +61,28 @@ export default function Contact() {
         body: JSON.stringify(payload)
       });
 
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
 
-      if (data.success) {
-        setStatus('Message sent successfully!');
+      if (res.ok && data.success) {
+        setStatus({ type: 'success', message: data.message || 'Message sent successfully!' });
         setFormData({ name: '', email: '', message: '', _honeypot: '', captchaText: '' });
         fetchCaptcha(); // Reset captcha for new messages
       } else {
-        setStatus(data.message || 'Something went wrong.');
+        const serverMessage = data.message || 'Unable to send message. Please check your inputs and try again.';
+        setStatus({ type: 'error', message: serverMessage });
+
+        if (res.status === 400) {
+          fetchCaptcha();
+        }
       }
     } catch (error) {
       console.error(error);
-      setStatus('Failed to send message. Please try again later.');
+      setStatus({
+        type: 'error',
+        message: 'Failed to send message due to network/server issue. Please try again later.',
+      });
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -81,14 +96,14 @@ export default function Contact() {
               Get In Touch
             </h2>
             <p className="mt-2 text-center text-sm text-gray-600">
-              I'd love to hear from you. Drop me a line below!
+              I&apos;d love to hear from you. Drop me a line below!
             </p>
           </div>
           <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
             
             {/* 🛡️ TRAPDOOR HONEYPOT FIELD - Hidden from users, visible to bots */}
             <div className="absolute left-[-9999px] top-[-9999px]" tabIndex="-1" aria-hidden="true">
-              <label htmlFor="_honeypot">Don't fill this out if you're human:</label>
+              <label htmlFor="_honeypot">Don&apos;t fill this out if you&apos;re human:</label>
               <input
                 type="text"
                 name="_honeypot"
@@ -175,18 +190,19 @@ export default function Contact() {
               />
             </div>
 
-            {status && (
-              <p className={`text-center text-sm ${status.includes('successfully') ? 'text-green-600' : 'text-red-500'}`}>
-                {status}
+            {status.message && (
+              <p className={`text-center text-sm ${status.type === 'success' ? 'text-green-600' : status.type === 'info' ? 'text-blue-600' : 'text-red-500'}`}>
+                {status.message}
               </p>
             )}
 
             <div>
               <button
                 type="submit"
+                disabled={submitting}
                 className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
               >
-                Send Message
+                {submitting ? 'Sending...' : 'Send Message'}
               </button>
             </div>
           </form>

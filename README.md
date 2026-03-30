@@ -383,6 +383,13 @@ SMTP_USER=your_gmail_address@gmail.com
 SMTP_PASS=your_gmail_app_password
 SMTP_FROM=your_gmail_address@gmail.com
 
+# SMTP network reliability options (recommended for servers with IPv6 issues)
+SMTP_FORCE_IPV4=true
+SMTP_DNS_RESULT_ORDER=ipv4first
+SMTP_CONNECTION_TIMEOUT_MS=20000
+SMTP_GREETING_TIMEOUT_MS=15000
+SMTP_SOCKET_TIMEOUT_MS=30000
+
 # Daily message digest schedule (11:55 PM every day, before 12:00 AM)
 DAILY_MESSAGE_DIGEST_CRON=55 23 * * *
 DAILY_MESSAGE_DIGEST_TIMEZONE=Asia/Kolkata
