@@ -1,6 +1,8 @@
 const nodemailer = require('nodemailer');
 const dns = require('dns').promises;
 
+const RESEND_API_URL = 'https://api.resend.com/emails';
+
 const parseBoolean = (value) => String(value).toLowerCase() === 'true';
 
 const shouldForceIPv4 = () => {
@@ -107,7 +109,54 @@ const assertEmailEnv = () => {
   }
 };
 
+const sendEmailWithResend = async ({ subject, htmlContent }) => {
+  const apiKey = process.env.RESEND_API_KEY;
+
+  if (!apiKey) {
+    return null;
+  }
+
+  const from = process.env.RESEND_FROM || process.env.EMAIL_FROM || process.env.EMAIL_USER;
+  const to = process.env.RECEIVER_EMAIL;
+
+  if (!from || !to) {
+    throw new Error('Resend configuration missing: RESEND_FROM or RECEIVER_EMAIL');
+  }
+
+  const response = await fetch(RESEND_API_URL, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      from,
+      to: [to],
+      subject,
+      html: htmlContent,
+    }),
+  });
+
+  if (!response.ok) {
+    const responseText = await response.text();
+    throw new Error(`Resend API failed (${response.status}): ${responseText}`);
+  }
+
+  return response.json();
+};
+
 const sendEmail = async ({ subject, htmlContent }) => {
+  if (process.env.RESEND_API_KEY) {
+    try {
+      return await sendEmailWithResend({ subject, htmlContent });
+    } catch (error) {
+      console.error('Resend email send failed:', {
+        message: error.message,
+      });
+      throw error;
+    }
+  }
+
   assertEmailEnv();
 
   const transportConfig = await buildTransportConfig();
