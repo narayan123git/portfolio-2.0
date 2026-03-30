@@ -6,8 +6,9 @@ export default function BlogManager() {
   const [blogs, setBlogs] = useState([]);
   const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({
-    title: "", slug: "", content: "", aiSummary: "", tags: "", readTime: "", published: true
+    title: "", slug: "", coverImageUrl: "", content: "", aiSummary: "", tags: "", readTime: "", published: true
   });
+  const [coverImage, setCoverImage] = useState(null);
   const [status, setStatus] = useState({ loading: false, message: "", type: "" });
 
   // 1. Fetch existing records on load
@@ -38,6 +39,22 @@ export default function BlogManager() {
     setStatus({ loading: true, message: editingId ? "UPDATING_LOG..." : "WRITING_LOG_TO_DB...", type: "info" });
 
     try {
+      let coverImageUrl = formData.coverImageUrl || "";
+
+      if (coverImage) {
+        setStatus({ loading: true, message: "UPLOADING_BLOG_IMAGE...", type: "info" });
+        const imageForm = new FormData();
+        imageForm.append("image", coverImage);
+        const uploadRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/upload`, {
+          method: "POST",
+          credentials: "include",
+          body: imageForm,
+        });
+        const uploadData = await uploadRes.json();
+        if (!uploadRes.ok) throw new Error(uploadData.message || "Blog image upload failed");
+        coverImageUrl = uploadData.imageUrl;
+      }
+
       // Convert comma-separated tags into an array
       const tagsArray = typeof formData.tags === "string" 
         ? formData.tags.split(",").map(tag => tag.trim()).filter(Boolean)
@@ -53,13 +70,14 @@ export default function BlogManager() {
         method,
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...formData, tags: tagsArray }),
+        body: JSON.stringify({ ...formData, coverImageUrl, tags: tagsArray }),
       });
 
       if (!res.ok) throw new Error("Failed to save log");
 
       setStatus({ loading: false, message: editingId ? "LOG_UPDATED_SUCCESSFULLY" : "LOG_PUBLISHED_SUCCESSFULLY", type: "success" });
-      setFormData({ title: "", slug: "", content: "", aiSummary: "", tags: "", readTime: "", published: true });
+      setFormData({ title: "", slug: "", coverImageUrl: "", content: "", aiSummary: "", tags: "", readTime: "", published: true });
+      setCoverImage(null);
       setEditingId(null);
       fetchBlogs(); // Refresh the table
       
@@ -75,6 +93,7 @@ export default function BlogManager() {
     setFormData({
       title: blog.title,
       slug: blog.slug,
+      coverImageUrl: blog.coverImageUrl || "",
       content: blog.content,
       aiSummary: blog.aiSummary,
       tags: blog.tags.join(", "), // Convert array back to string for input
@@ -125,6 +144,21 @@ export default function BlogManager() {
           <textarea name="content" value={formData.content} onChange={handleInputChange} required rows="6" className="w-full bg-gray-950 border border-green-900 rounded p-2 text-sm text-green-400 focus:outline-none focus:border-green-400" />
         </div>
 
+        <div className="border border-green-900/50 p-4 rounded bg-gray-950/30">
+          <label className="block text-xs text-green-600 mb-1">
+            {editingId ? "Update Cover Image (Leave blank to keep current)" : "Blog Cover Image"}
+          </label>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(e) => setCoverImage(e.target.files?.[0] || null)}
+            className="text-sm text-green-600 file:mr-4 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:font-bold file:bg-green-900/50 file:text-green-400 hover:file:bg-green-800"
+          />
+          {formData.coverImageUrl && (
+            <p className="text-xs text-green-700 mt-2 truncate">Current: {formData.coverImageUrl}</p>
+          )}
+        </div>
+
         <div>
           <label className="block text-xs text-green-600 mb-1">AI Summary (Short intro)</label>
           <textarea name="aiSummary" value={formData.aiSummary} onChange={handleInputChange} required rows="2" className="w-full bg-gray-950 border border-green-900 rounded p-2 text-sm text-green-400 focus:outline-none focus:border-green-400" />
@@ -146,7 +180,7 @@ export default function BlogManager() {
             {status.loading ? "PROCESSING..." : editingId ? "EXECUTE_UPDATE" : "PUBLISH_LOG"}
           </button>
           {editingId && (
-            <button type="button" onClick={() => { setEditingId(null); setFormData({ title: "", slug: "", content: "", aiSummary: "", tags: "", readTime: "", published: true }); }} className="flex-1 bg-gray-900 hover:bg-gray-800 border border-gray-500 text-gray-400 font-bold py-2 px-4 rounded transition-all mt-4">
+            <button type="button" onClick={() => { setEditingId(null); setFormData({ title: "", slug: "", coverImageUrl: "", content: "", aiSummary: "", tags: "", readTime: "", published: true }); setCoverImage(null); }} className="flex-1 bg-gray-900 hover:bg-gray-800 border border-gray-500 text-gray-400 font-bold py-2 px-4 rounded transition-all mt-4">
               CANCEL_EDIT
             </button>
           )}

@@ -10,8 +10,8 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-// 2. Configure the storage engine
-const storage = new CloudinaryStorage({
+// 2. Configure image storage
+const imageStorage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
     folder: 'portfolio_assets', // A dedicated folder in your cloud
@@ -20,7 +20,21 @@ const storage = new CloudinaryStorage({
   },
 });
 
-// 3. Initialize Multer with our secure storage engine
-const upload = multer({ storage: storage });
+// 3. Configure video storage
+const videoStorage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: 'portfolio_videos',
+    resource_type: 'video',
+    allowed_formats: ['mp4', 'webm', 'mov', 'm4v'],
+  },
+});
 
-module.exports = { upload, cloudinary };
+// 4. Initialize Multer uploaders
+const uploadImage = multer({ storage: imageStorage });
+const uploadVideo = multer({ storage: videoStorage });
+
+// Backward compatibility for older imports.
+const upload = uploadImage;
+
+module.exports = { upload, uploadImage, uploadVideo, cloudinary };

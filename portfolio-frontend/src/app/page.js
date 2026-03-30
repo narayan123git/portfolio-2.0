@@ -1,6 +1,8 @@
 import Navbar from "../components/navbar";
 import Link from "next/link";
 import MagneticButton from "@/components/MagneticButton";
+import * as FaIcons from "react-icons/fa";
+import * as SiIcons from "react-icons/si";
 
 // Next.js App Router allows async server components, perfect for initial API fetches!
 async function getSettings() {
@@ -13,7 +15,7 @@ async function getSettings() {
 
 async function getSkills() {
   try {
-    const res = await fetch(`${process.env.INTERNAL_BACKEND_URL }/api/skills`, { cache: 'no-store' });
+    const res = await fetch(`${process.env.INTERNAL_BACKEND_URL || 'http://localhost:5000'}/api/skills`, { cache: 'no-store' });
     const data = await res.json();
     return data.success ? data.data : [];
   } catch (err) { return []; }
@@ -48,6 +50,40 @@ const normalizeExternalUrl = (url) => {
   return /^(https?:)?\/\//i.test(url) ? url : `https://${url}`;
 };
 
+const iconPacks = {
+  Fa: FaIcons,
+  Si: SiIcons,
+};
+
+const isUrl = (value) => /^(https?:)?\/\//i.test(String(value || ''));
+
+const renderSkillIcon = (iconName, skillName) => {
+  if (!iconName) {
+    return <div className="w-8 h-8 rounded-full bg-orange-500/20 border border-orange-300/30 flex items-center justify-center text-xs text-orange-200">SK</div>;
+  }
+
+  if (isUrl(iconName)) {
+    return (
+      <img
+        src={iconName}
+        alt={skillName || 'Skill icon'}
+        className="w-8 h-8 rounded object-contain bg-black/20 p-1"
+        loading="lazy"
+      />
+    );
+  }
+
+  const prefix = String(iconName).slice(0, 2);
+  const pack = iconPacks[prefix];
+  const IconComponent = pack ? pack[iconName] : null;
+
+  if (!IconComponent) {
+    return <div className="w-8 h-8 rounded-full bg-orange-500/20 border border-orange-300/30 flex items-center justify-center text-xs text-orange-200">SK</div>;
+  }
+
+  return <IconComponent className="w-6 h-6 text-orange-200" aria-hidden="true" />;
+};
+
 export default async function Home() {
   const settings = await getSettings();
   const skills = await getSkills();
@@ -74,7 +110,7 @@ export default async function Home() {
           <div className="lg:col-span-3 border-l-2 border-orange-300 pl-6 space-y-5">
             <p className="mono-ui text-orange-200 text-sm animate-pulse">&gt; system.status: online</p>
             <h1 className="text-5xl md:text-7xl font-extrabold text-white tracking-tight leading-[0.92]">
-            Hello, I'm <br />
+            Hello, I&apos;m <br />
               <span style={{ color: settings?.primaryColor || '#ff8e3c' }}>Narayan.</span>
             </h1>
             <p className="text-slate-100/85 text-lg max-w-2xl leading-relaxed">
@@ -124,6 +160,15 @@ export default async function Home() {
           </div>
 
           <div className="lg:col-span-2 rounded-2xl surface-card p-6 shadow-[0_15px_30px_rgba(7,16,40,0.35)]">
+            {settings?.profileImageUrl && (
+              <div className="mb-6">
+                <img
+                  src={settings.profileImageUrl}
+                  alt="Narayan profile"
+                  className="w-32 h-32 rounded-full object-cover border-2 border-orange-300/60"
+                />
+              </div>
+            )}
             <h2 className="text-xl font-bold text-white">What You Can Explore Here</h2>
             <p className="text-sm text-slate-100/80 mt-2 leading-relaxed">
               This portfolio includes production projects, technical blogs, development diary notes, and a secure admin command center that manages all content modules.
@@ -147,6 +192,20 @@ export default async function Home() {
           </div>
         </div>
       </section>
+
+      {settings?.showHomeVideo && settings?.homeVideoUrl && (
+        <section className="max-w-6xl mx-auto mt-16 px-6">
+          <div className="rounded-2xl surface-card p-4 border border-orange-300/30">
+            <p className="mono-ui text-xs text-orange-200 mb-3">HOME_INTRO_VIDEO</p>
+            <video
+              src={settings.homeVideoUrl}
+              controls
+              playsInline
+              className="w-full rounded-xl border border-blue-300/25"
+            />
+          </div>
+        </section>
+      )}
 
       {featuredProjects.length > 0 && (
         <section className="max-w-6xl mx-auto mt-20 px-6">
@@ -179,6 +238,14 @@ export default async function Home() {
           <div className="grid md:grid-cols-3 gap-5">
             {featuredBlogs.map((blog) => (
               <article key={blog._id} className="rounded-2xl surface-card p-5 h-full flex flex-col">
+                {blog.coverImageUrl && (
+                  <img
+                    src={blog.coverImageUrl}
+                    alt={blog.title}
+                    className="w-full h-36 object-cover rounded mb-4 border border-blue-300/20"
+                    loading="lazy"
+                  />
+                )}
                 <h3 className="text-lg font-bold text-white line-clamp-2">{blog.title}</h3>
                 <p className="text-xs text-orange-200/80 mono-ui mt-2">/{blog.slug}</p>
                 <p className="text-sm text-slate-100/70 mt-3 line-clamp-4">{blog.aiSummary || blog.content}</p>
@@ -215,7 +282,10 @@ export default async function Home() {
             {skills.map(skill => (
               <div key={skill._id} className="p-4 surface-card rounded-xl hover:border-orange-300/60 transition-colors group">
                 <div className="flex justify-between items-center mb-2">
-                  <span className="text-white text-sm">{skill.name}</span>
+                  <div className="flex items-center gap-2">
+                    {renderSkillIcon(skill.icon, skill.name)}
+                    <span className="text-white text-sm">{skill.name}</span>
+                  </div>
                   <span className="text-xs text-orange-200">{skill.percentage}%</span>
                 </div>
                 <div className="w-full bg-black/30 h-1.5 rounded overflow-hidden">

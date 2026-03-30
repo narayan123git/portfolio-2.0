@@ -49,6 +49,13 @@ export default function BlogPost() {
         {!isLoading && blog && (
           <article className="animate-fade-in">
             <header className="mb-10 border-b border-green-900/50 pb-6">
+              {blog.coverImageUrl && (
+                <img
+                  src={blog.coverImageUrl}
+                  alt={blog.title}
+                  className="w-full max-h-[420px] object-cover rounded-lg mb-6 border border-green-900/40"
+                />
+              )}
               <h1 className="text-4xl md:text-5xl font-bold text-white mb-4 leading-tight">
                 {blog.title}
               </h1>

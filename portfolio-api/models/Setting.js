@@ -28,6 +28,18 @@ const settingSchema = new mongoose.Schema({
   currentStatus: {
     type: String,
     default: 'Actively looking for roles'
+  },
+  profileImageUrl: {
+    type: String,
+    default: ''
+  },
+  homeVideoUrl: {
+    type: String,
+    default: ''
+  },
+  showHomeVideo: {
+    type: Boolean,
+    default: false
   }
 }, { timestamps: true });
 

@@ -8,10 +8,15 @@ export default function SettingsManager() {
     heroText: '',
     primaryColor: '#3b82f6',
     isHiring: true,
-    currentStatus: ''
+    currentStatus: '',
+    profileImageUrl: '',
+    homeVideoUrl: '',
+    showHomeVideo: false,
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [profileImage, setProfileImage] = useState(null);
+  const [homeVideo, setHomeVideo] = useState(null);
 
   const fetchSettings = async () => {
     try {
@@ -39,20 +44,62 @@ export default function SettingsManager() {
     e.preventDefault();
     setSaving(true);
     try {
+      let profileImageUrl = settings.profileImageUrl || '';
+      let homeVideoUrl = settings.homeVideoUrl || '';
+
+      if (profileImage) {
+        const imageForm = new FormData();
+        imageForm.append('image', profileImage);
+        const uploadRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/upload`, {
+          method: 'POST',
+          credentials: 'include',
+          body: imageForm,
+        });
+        const uploadData = await uploadRes.json();
+        if (!uploadRes.ok) {
+          throw new Error(uploadData.message || 'Profile image upload failed');
+        }
+        profileImageUrl = uploadData.imageUrl;
+      }
+
+      if (homeVideo) {
+        const videoForm = new FormData();
+        videoForm.append('video', homeVideo);
+        const uploadVideoRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/upload/video`, {
+          method: 'POST',
+          credentials: 'include',
+          body: videoForm,
+        });
+        const uploadVideoData = await uploadVideoRes.json();
+        if (!uploadVideoRes.ok) {
+          throw new Error(uploadVideoData.message || 'Home video upload failed');
+        }
+        homeVideoUrl = uploadVideoData.videoUrl;
+      }
+
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/settings`, {
         method: 'PUT',
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(settings)
+        body: JSON.stringify({
+          ...settings,
+          profileImageUrl,
+          homeVideoUrl,
+        })
       });
       const data = await res.json();
       if (!data.success) {
         alert('Failed to save settings');
+      } else {
+        setSettings(data.data);
+        setProfileImage(null);
+        setHomeVideo(null);
       }
     } catch (error) {
       console.error('Error saving settings:', error);
+      alert(error.message || 'Failed to save settings');
     } finally {
       setSaving(false);
     }
@@ -123,6 +170,50 @@ export default function SettingsManager() {
             className="w-full bg-gray-800 border border-gray-700 rounded p-2 text-white"
             placeholder="e.g. Learning Next.js / Actively Looking"
           />
+        </div>
+
+        <div className="border border-gray-700 rounded p-4 bg-gray-900/40 space-y-4">
+          <p className="text-sm font-medium text-gray-200">Home Media</p>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-1">Profile Photo (Cloudinary image)</label>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => setProfileImage(e.target.files?.[0] || null)}
+              className="w-full text-sm text-gray-300 file:mr-4 file:py-2 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-gray-700 file:text-white hover:file:bg-gray-600"
+            />
+            {settings.profileImageUrl && (
+              <p className="text-xs text-gray-400 mt-2 break-all">Current: {settings.profileImageUrl}</p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-1">Home Intro Video (Cloudinary video)</label>
+            <input
+              type="file"
+              accept="video/mp4,video/webm,video/quicktime,video/x-m4v"
+              onChange={(e) => setHomeVideo(e.target.files?.[0] || null)}
+              className="w-full text-sm text-gray-300 file:mr-4 file:py-2 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-gray-700 file:text-white hover:file:bg-gray-600"
+            />
+            {settings.homeVideoUrl && (
+              <p className="text-xs text-gray-400 mt-2 break-all">Current: {settings.homeVideoUrl}</p>
+            )}
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              id="showHomeVideo"
+              name="showHomeVideo"
+              checked={Boolean(settings.showHomeVideo)}
+              onChange={handleChange}
+              className="w-4 h-4 text-green-600 bg-gray-800 border-gray-700 rounded"
+            />
+            <label htmlFor="showHomeVideo" className="text-sm font-medium text-gray-300 cursor-pointer">
+              Show video on Home page
+            </label>
+          </div>
         </div>
 
         <div className="flex items-center space-x-4">

@@ -6,12 +6,15 @@ const honeypot = async (req, res, next) => {
 
   if (forbiddenRoutes.includes(req.originalUrl)) {
     try {
+      const payload = req.body && Object.keys(req.body).length ? JSON.stringify(req.body) : 'No payload';
+      const payloadPreview = payload.length > 500 ? `${payload.slice(0, 500)}...` : payload;
+
       // 1. Log the attacker's details to your database
       await SecurityLog.create({
+        eventType: 'HONEYPOT_TRIGGER',
         ipAddress: req.ip || req.connection.remoteAddress,
-        endpointAttempted: req.originalUrl,
-        payload: req.body,
-        isBlocked: true
+        userAgent: req.headers['user-agent'],
+        details: `Trap route hit: ${req.originalUrl}. Payload: ${payloadPreview}`,
       });
 
       console.log(`[SECURITY ALERT] Malicious bot trapped at ${req.originalUrl} from IP: ${req.ip}`);

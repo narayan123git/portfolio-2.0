@@ -33,11 +33,12 @@ exports.getBlogBySlug = async (req, res) => {
 // @route   POST /api/blogs
 exports.createBlog = async (req, res) => {
   try {
-    const { title, slug, content, aiSummary, tags, readTime, published } = req.body;
+    const { title, slug, coverImageUrl, content, aiSummary, tags, readTime, published } = req.body;
     
     const blog = await Blog.create({ 
       title, 
       slug, 
+      coverImageUrl,
       content, 
       aiSummary, 
       tags, 

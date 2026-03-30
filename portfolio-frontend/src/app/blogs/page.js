@@ -38,6 +38,14 @@ export default function Blogs() {
           <div className="space-y-8">
             {blogs.map((blog) => (
               <article key={blog._id} className="border border-green-900/50 bg-gray-900/30 p-6 hover:border-green-500/50 transition-colors">
+                {blog.coverImageUrl && (
+                  <img
+                    src={blog.coverImageUrl}
+                    alt={blog.title}
+                    className="w-full h-52 object-cover rounded mb-5 border border-green-900/40"
+                    loading="lazy"
+                  />
+                )}
                 <div className="flex justify-between items-start mb-4">
                   <h2 className="text-2xl font-bold text-white">{blog.title}</h2>
                   <span className="text-xs text-green-600 border border-green-900 px-2 py-1 rounded">{blog.readTime} min read</span>

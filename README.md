@@ -16,6 +16,10 @@
 
 ## 🆕 Recent Updates (March 2026)
 
+- Added admin-managed **Home Media** controls: upload profile photo (Cloudinary), upload intro video, and toggle video visibility.
+- Added **Blog cover image upload** support from admin, with rendering on blog list and blog detail pages.
+- Enabled **Skills icon rendering** on home page using React Icons names (Fa*/Si*) or direct image URLs.
+- Added **daily message digest email** and **instant security log alert emails**.
 - Added admin **Forgot Password** flow with secure reset key validation.
 - Upgraded **Skills Manager**: choosing `Other` now reveals a required details textarea.
 - Fixed public **Projects page** loading issue caused by API response shape mismatch.
@@ -132,13 +136,13 @@ Accessible at `/admin` — protected behind JWT authentication. Once logged in, 
 | Manager | What you can control |
 |---------|----------------------|
 | **ProjectManager** | Add / edit / delete portfolio projects with images, tech stack tags, GitHub & live links |
-| **BlogManager** | Write Markdown blogs with AI-generated 3-point summaries, tags, and read-time |
+| **BlogManager** | Write Markdown blogs with AI-generated 3-point summaries, tags, read-time, and cover image uploads |
 | **DiaryManager** | Create private diary entries (visibility-toggled) |
 | **EducationManager** | Manage education timeline entries |
 | **SkillManager** | Add skills with proficiency percentages and optional custom details for `Other` category |
 | **MessageManager** | Read contact messages sent by visitors |
 | **SecurityManager** | View the honeypot security log — trapped IPs & attempted endpoints |
-| **SettingsManager** | Edit hero text, primary accent color, social links, resume URL, and hiring status |
+| **SettingsManager** | Edit hero text, primary accent color, social links, resume URL, hiring status, profile image, and home video visibility |
 
 ### 2. Advanced Security — The Honeypot 🍯
 
@@ -188,10 +192,11 @@ exit            Close the terminal
 - **Custom Cursor** (`CustomCursor.js`) — replaces the default browser cursor with a styled animated dot.
 - **Magnetic Buttons** (`MagneticButton.js`) — interactive Framer Motion buttons that follow the cursor on hover.
 - **Skills Matrix** — live-fetched proficiency bars rendered on the home page.
+- **Skills Icons** — rendered from React Icons names (Fa*/Si*) or direct image URLs stored in admin.
 - **Education Timeline** — chronological timeline built from the `Education` collection.
-- **Blog Posts** — Markdown-rendered articles with slug-based routing (`/blogs/:slug`), tags, read time, and AI-generated TL;DR summaries.
+- **Blog Posts** — Markdown-rendered articles with slug-based routing (`/blogs/:slug`), tags, read time, AI-generated TL;DR summaries, and cover images.
 - **Project Cards** — filterable by tech stack and language, grayscale-to-color image reveal on hover, and links to GitHub / live demo.
-- **Home Experience** — richer hero storytelling, project and skill highlights, and explicit public notice of the private admin portal.
+- **Home Experience** — richer hero storytelling, project and skill highlights, admin-managed profile image, optional intro video, and explicit public notice of the private admin portal.
 
 ---
 
@@ -202,6 +207,7 @@ exit            Close the terminal
 |-----------|---------|------|
 | Next.js | 16.2.1 | Framework — App Router, SSR, API rewrites |
 | React | 19.2.4 | UI library |
+| React Icons | ^5.6 | Skill icon rendering from icon names |
 | Tailwind CSS | v4 | Utility-first styling |
 | Framer Motion | v12 | Animations & magnetic button interactions |
 
@@ -221,6 +227,8 @@ exit            Close the terminal
 | xss-clean | ^0.1 | XSS input sanitisation |
 | hpp | ^0.2 | HTTP Parameter Pollution prevention |
 | express-validator | ^7.3 | Input validation |
+| nodemailer | ^8.0 | SMTP mail delivery (digest + alerts) |
+| node-cron | ^4.2 | Daily scheduler for message digest |
 | dotenv | ^17.3 | Environment variable loading |
 | cors | ^2.8 | Cross-Origin Resource Sharing |
 
@@ -232,7 +240,7 @@ In the Skills Manager, the Icon field stores a string value (example: FaReact) o
 
 Current behavior:
 - Icon values are saved in the database.
-- Your current public skills cards do not render icons yet.
+- Public skills cards render icons from React Icons names or image URLs.
 - This reference helps you enter consistent icon names now, so you can render them later without cleanup.
 
 ### Common icon names for technologies and tools
@@ -363,6 +371,21 @@ CLOUDINARY_CLOUD_NAME=your_cloud_name
 CLOUDINARY_API_KEY=your_api_key
 CLOUDINARY_API_SECRET=your_api_secret
 FRONTEND_URL=http://localhost:3000
+
+# Alert destination email
+ALERT_EMAIL_TO=narayanpaulnitdgp@gmail.com
+
+# SMTP settings (example shown for Gmail)
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=your_gmail_address@gmail.com
+SMTP_PASS=your_gmail_app_password
+SMTP_FROM=your_gmail_address@gmail.com
+
+# Daily message digest schedule (11:55 PM every day, before 12:00 AM)
+DAILY_MESSAGE_DIGEST_CRON=55 23 * * *
+DAILY_MESSAGE_DIGEST_TIMEZONE=Asia/Kolkata
 ```
 
 **`portfolio-frontend/.env`**
@@ -373,6 +396,41 @@ INTERNAL_BACKEND_URL=http://localhost:5000
 # Public base path used by client-side fetches (triggers the proxy)
 NEXT_PUBLIC_API_URL=/api
 ```
+
+### Step 2.1 — Enable Mail Alerts (Important)
+
+Follow this once to make sure daily digest + instant security emails work:
+
+1. Use a real SMTP account in `portfolio-api/.env`.
+2. If you use Gmail, enable 2-Step Verification.
+3. Generate a Gmail App Password and use it as `SMTP_PASS`.
+4. Keep `ALERT_EMAIL_TO=narayanpaulnitdgp@gmail.com`.
+5. Restart backend after env updates.
+
+What gets emailed:
+
+- Daily digest before midnight if new contact messages arrived that day.
+- Instant alert whenever a new security log is created.
+
+### Step 2.2 — Cron Value Guide
+
+`DAILY_MESSAGE_DIGEST_CRON` uses 5 fields:
+
+`minute hour day-of-month month day-of-week`
+
+Examples:
+
+- `55 23 * * *` → Every day at 11:55 PM
+- `50 23 * * *` → Every day at 11:50 PM
+- `0 0 * * *` → Every day at 12:00 AM
+
+Recommended value for your requirement (before 12:00 AM):
+
+`DAILY_MESSAGE_DIGEST_CRON=55 23 * * *`
+
+Timezone is controlled by:
+
+`DAILY_MESSAGE_DIGEST_TIMEZONE=Asia/Kolkata`
 
 ### Step 3 — Seed the Admin Account (First Run Only)
 
@@ -475,6 +533,7 @@ npm run dev
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | `POST` | `/api/upload` | 🔒 Upload an image to Cloudinary |
+| `POST` | `/api/upload/video` | 🔒 Upload a video to Cloudinary |
 
 ### Security
 | Method | Endpoint | Description |
