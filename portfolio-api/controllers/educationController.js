@@ -5,7 +5,7 @@ const Education = require('../models/Education');
 // @access  Public
 const getEducation = async (req, res) => {
   try {
-    const education = await Education.find().sort({ startDate: -1 });
+    const education = await Education.find().sort({ startDate: -1 }).lean();
     res.status(200).json({ success: true, count: education.length, data: education });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Server Error' });

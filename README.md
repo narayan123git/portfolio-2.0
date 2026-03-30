@@ -335,6 +335,76 @@ If you want, I can also add a live icon preview in the Skills Manager so you can
 
 ---
 
+## 📘 Easy Full-App Explanation (Beginner Friendly)
+
+This section explains the whole app in simple language, from user click to database response.
+
+### Is there an `ARCHITECTURE.md` file?
+
+No separate `ARCHITECTURE.md` file is currently used.
+
+All architecture and internal behavior documentation is maintained in this `README.md` (this section + deep-dive section below), so you can find everything in one place.
+
+### What this app actually is
+
+Think of this project as two apps working together:
+
+1. Frontend app (`portfolio-frontend`): what users see in the browser.
+2. Backend app (`portfolio-api`): where data, auth, security checks, and business logic run.
+
+### Simple request flow (one example)
+
+When someone opens Projects page:
+
+1. Browser asks frontend page to load.
+2. Frontend requests project data from API endpoint.
+3. Backend receives request and runs security middleware first.
+4. Backend controller reads projects from MongoDB.
+5. JSON response goes back to frontend.
+6. Frontend renders cards on screen.
+
+### How admin panel works (simple)
+
+1. Admin logs in with username/password.
+2. Backend verifies credentials and issues secure auth token cookie.
+3. Admin dashboard loads manager components (projects/blogs/skills/etc.).
+4. Each manager can create, edit, delete records via protected API routes.
+
+### How contact and security work
+
+Contact form is protected by multiple layers:
+
+1. Honeypot bot trap field.
+2. Captcha verification.
+3. Rate limiting.
+4. Input validation and sanitization.
+5. Security event logging.
+
+If suspicious activity is detected, security log entries are created and alert flows can notify admin.
+
+### How media upload works
+
+1. Admin selects image/video in dashboard.
+2. File is uploaded through backend upload route.
+3. Backend stores file in Cloudinary.
+4. Cloudinary URL is saved in MongoDB.
+5. Frontend uses stored URL for rendering.
+
+### Security-safe documentation note
+
+This README intentionally explains architecture and security strategy but does not include real secrets.
+
+Never place real values for:
+
+1. JWT secret
+2. DB credentials
+3. SMTP password
+4. reset/admin private keys
+
+Use `.env` placeholders only.
+
+---
+
 ## 🔬 Deep-Dive Documentation (Component-by-Component)
 
 This section is intentionally detailed so you can understand exactly how each part behaves, how data moves, and where security is enforced.
@@ -617,7 +687,7 @@ CLOUDINARY_API_SECRET=your_api_secret
 FRONTEND_URL=http://localhost:3000
 
 # Alert destination email
-ALERT_EMAIL_TO=narayanpaulnitdgp@gmail.com
+ALERT_EMAIL_TO=your_alert_email@example.com
 
 # SMTP settings (example shown for Gmail)
 SMTP_HOST=smtp.gmail.com

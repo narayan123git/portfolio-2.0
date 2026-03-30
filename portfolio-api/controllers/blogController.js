@@ -6,7 +6,7 @@ exports.getBlogs = async (req, res) => {
   try {
     // If frontend requests ?all=true, fetch everything. Otherwise, only published.
     const query = req.query.all === 'true' ? {} : { published: true };
-    const blogs = await Blog.find(query).sort({ createdAt: -1 });
+    const blogs = await Blog.find(query).sort({ createdAt: -1 }).lean();
     res.json(blogs);
   } catch (error) {
     res.status(500).json({ message: 'Server error while fetching blogs.' });
@@ -17,7 +17,7 @@ exports.getBlogs = async (req, res) => {
 // @route   GET /api/blogs/:slug
 exports.getBlogBySlug = async (req, res) => {
   try {
-    const blog = await Blog.findOne({ slug: req.params.slug });
+    const blog = await Blog.findOne({ slug: req.params.slug }).lean();
     
     if (!blog) {
       return res.status(404).json({ message: 'Log not found in database.' });

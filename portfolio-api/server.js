@@ -29,10 +29,20 @@ app.set('trust proxy', 1);
 app.use(helmet());
 
 // 2. Strict CORS Configuration (Only allow your exact frontend domains)
-const allowedOrigins = [process.env.FRONTEND_URL];
+const allowedOrigins = (process.env.FRONTEND_URL || '')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
 app.use(cors({
   origin: function (origin, callback) {
-    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+    // Allow non-browser requests without Origin in development/local contexts.
+    if (!origin && process.env.NODE_ENV !== 'production') {
+      callback(null, true);
+      return;
+    }
+
+    if (origin && allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));

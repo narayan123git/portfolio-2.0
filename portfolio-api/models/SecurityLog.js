@@ -34,8 +34,8 @@ const securityLogSchema = new mongoose.Schema({
   }
 }, { timestamps: true });
 
-// Automatically delete security logs after 1 day (86400 seconds)
-securityLogSchema.index({ createdAt: 1 }, { expireAfterSeconds: 86400 });
+// Automatically delete security logs after 5 days.
+securityLogSchema.index({ createdAt: 1 }, { expireAfterSeconds: 5 * 24 * 60 * 60 });
 
 securityLogSchema.post('save', async function notifySecurityEvent(logDoc) {
   try {

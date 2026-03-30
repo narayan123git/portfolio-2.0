@@ -17,6 +17,11 @@ const jetBrainsMono = JetBrains_Mono({
 export const metadata = {
   title: "Narayan Paul | Engineering Portfolio",
   description: "Secure full-stack portfolio featuring projects, writing, and an admin command center.",
+  icons: {
+    icon: "/portfolio-narayan.jpeg",
+    shortcut: "/portfolio-narayan.jpeg",
+    apple: "/portfolio-narayan.jpeg",
+  },
   applicationName: "Narayan Paul Portfolio",
   keywords: [
     "Narayan Paul",

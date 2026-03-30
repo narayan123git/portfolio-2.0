@@ -4,7 +4,7 @@ const Diary = require('../models/Diary');
 // @route   GET /api/diary
 exports.getEntries = async (req, res) => {
   try {
-    const entries = await Diary.find().sort({ createdAt: -1 });
+    const entries = await Diary.find().sort({ createdAt: -1 }).lean();
     res.json(entries);
   } catch (error) {
     res.status(500).json({ message: 'Server error while fetching diary entries.' });

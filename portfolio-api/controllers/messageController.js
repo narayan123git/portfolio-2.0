@@ -92,7 +92,7 @@ const sendMessage = async (req, res) => {
 // @access  Private (Admin)
 const getMessages = async (req, res) => {
   try {
-    const messages = await Message.find().sort({ createdAt: -1 });
+    const messages = await Message.find().sort({ createdAt: -1 }).lean();
     res.status(200).json({ success: true, count: messages.length, data: messages });
   } catch (error) {
     console.error(error);
