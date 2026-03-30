@@ -39,6 +39,10 @@ securityLogSchema.index({ createdAt: 1 }, { expireAfterSeconds: 5 * 24 * 60 * 60
 
 securityLogSchema.post('save', async function notifySecurityEvent(logDoc) {
   try {
+    if (logDoc.eventType === 'CAPTCHA_FAILED') {
+      return;
+    }
+
     const occurredAt = new Date(logDoc.createdAt || Date.now()).toISOString();
     const eventType = escapeHtml(logDoc.eventType || 'UNKNOWN');
     const severity = eventType.includes('FAILED') || eventType.includes('UNAUTHORIZED')
