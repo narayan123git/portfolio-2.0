@@ -3,6 +3,11 @@
 import { useState, useEffect } from 'react';
 import Navbar from '@/components/navbar';
 
+const RENDER_COLD_START_MESSAGE =
+  'Server is waking up after inactivity. Please wait, this can take up to 50 seconds on free hosting.';
+const REQUEST_TIMEOUT_MS = 65000;
+const SLOW_NOTICE_MS = 4000;
+
 export default function Contact() {
   const [formData, setFormData] = useState({
     name: '',
@@ -18,18 +23,42 @@ export default function Contact() {
   const [submitting, setSubmitting] = useState(false);
 
   const fetchCaptcha = async () => {
+    const controller = new AbortController();
+    const requestTimeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+    const slowNoticeTimeout = setTimeout(() => {
+      setStatus({ type: 'info', message: RENDER_COLD_START_MESSAGE });
+    }, SLOW_NOTICE_MS);
+
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/messages/captcha`);
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/messages/captcha`, {
+        signal: controller.signal,
+      });
       const data = await res.json();
       if (data.success) {
         setImageCaptcha(data.data);
+        setStatus((prev) =>
+          prev.type === 'info' && prev.message === RENDER_COLD_START_MESSAGE
+            ? { type: '', message: '' }
+            : prev
+        );
       } else {
         setStatus({ type: 'error', message: 'Unable to load captcha. Please refresh the page.' });
       }
     } catch (err) {
       console.error('Failed to fetch captcha');
-      setStatus({ type: 'error', message: 'Network error while loading captcha.' });
+      if (err.name === 'AbortError') {
+        setStatus({
+          type: 'error',
+          message: 'Server took too long to respond. Please try again in a moment.',
+        });
+      } else {
+        setStatus({ type: 'error', message: 'Network error while loading captcha.' });
+      }
+    } finally {
+      clearTimeout(requestTimeout);
+      clearTimeout(slowNoticeTimeout);
     }
+
     setFormData((prev) => ({ ...prev, captchaText: '' }));
   };
 
@@ -46,6 +75,12 @@ export default function Contact() {
     setSubmitting(true);
     setStatus({ type: 'info', message: 'Submitting...' });
 
+    const controller = new AbortController();
+    const requestTimeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+    const slowNoticeTimeout = setTimeout(() => {
+      setStatus({ type: 'info', message: RENDER_COLD_START_MESSAGE });
+    }, SLOW_NOTICE_MS);
+
     try {
       const payload = {
         ...formData,
@@ -59,6 +94,7 @@ export default function Contact() {
         headers: {
           'Content-Type': 'application/json'
         },
+        signal: controller.signal,
         body: JSON.stringify(payload)
       });
 
@@ -78,11 +114,20 @@ export default function Contact() {
       }
     } catch (error) {
       console.error(error);
-      setStatus({
-        type: 'error',
-        message: 'Failed to send message due to network/server issue. Please try again later.',
-      });
+      if (error.name === 'AbortError') {
+        setStatus({
+          type: 'error',
+          message: 'Server is still waking up. Please wait a bit and try again.',
+        });
+      } else {
+        setStatus({
+          type: 'error',
+          message: 'Failed to send message due to network/server issue. Please try again later.',
+        });
+      }
     } finally {
+      clearTimeout(requestTimeout);
+      clearTimeout(slowNoticeTimeout);
       setSubmitting(false);
     }
   };

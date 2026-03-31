@@ -1,6 +1,7 @@
 const Message = require('../models/Message');
 const SecurityLog = require('../models/SecurityLog');
 const { generateSecureCaptcha, verifyCaptcha } = require('../portfolio-api/utils/captcha');
+const { sendMail } = require('../services/mailService');
 
 // @desc    Get CAPTCHA
 // @route   GET /api/messages/captcha
@@ -76,6 +77,36 @@ const sendMessage = async (req, res) => {
       subject: resolvedSubject,
       message,
     });
+
+    const recipient = process.env.ALERT_EMAIL_TO;
+    if (recipient) {
+      const submittedAt = new Date(newMessage.createdAt || Date.now()).toISOString();
+      const subject = `[Portfolio API] New contact message from ${name}`;
+      const text = [
+        'A new contact message was received.',
+        '',
+        `Time: ${submittedAt}`,
+        `Name: ${name}`,
+        `Email: ${email}`,
+        `Message: ${message}`,
+      ].join('\n');
+      const safeMessage = String(message || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const html = `
+        <h2>New Contact Message</h2>
+        <ul>
+          <li><strong>Time:</strong> ${submittedAt}</li>
+          <li><strong>Name:</strong> ${name}</li>
+          <li><strong>Email:</strong> ${email}</li>
+        </ul>
+        <p><strong>Message:</strong></p>
+        <p>${safeMessage.replace(/\n/g, '<br/>')}</p>
+      `;
+
+      // Message persistence must succeed even if email delivery fails.
+      void sendMail({ to: recipient, subject, text, html }).catch((mailError) => {
+        console.error('Failed to send immediate message alert:', mailError.message);
+      });
+    }
 
     res.status(201).json({
       success: true,

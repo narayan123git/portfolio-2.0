@@ -3,6 +3,11 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
+const RENDER_COLD_START_MESSAGE =
+  "Server is waking up after inactivity. Please wait, this can take up to 50 seconds on free hosting.";
+const REQUEST_TIMEOUT_MS = 65000;
+const SLOW_NOTICE_MS = 4000;
+
 export default function AdminLogin() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -12,6 +17,7 @@ export default function AdminLogin() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [info, setInfo] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [forgotMode, setForgotMode] = useState(false);
   const [resetStep, setResetStep] = useState("request");
@@ -22,6 +28,13 @@ export default function AdminLogin() {
     setIsLoading(true);
     setError("");
     setSuccess("");
+    setInfo("");
+
+    const controller = new AbortController();
+    const requestTimeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+    const slowNoticeTimeout = setTimeout(() => {
+      setInfo(RENDER_COLD_START_MESSAGE);
+    }, SLOW_NOTICE_MS);
 
     try {
       // 1. Send credentials to your secure Node.js backend
@@ -29,6 +42,7 @@ export default function AdminLogin() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
+        signal: controller.signal,
         body: JSON.stringify({ username, password }),
       });
 
@@ -42,8 +56,15 @@ export default function AdminLogin() {
         setError(data.message || "Access Denied.");
       }
     } catch (err) {
-      setError("Server connection failed. Is the backend running?");
+      if (err.name === "AbortError") {
+        setError("Server wake-up is taking longer than expected. Please try again shortly.");
+      } else {
+        setError("Server connection failed. Is the backend running?");
+      }
     } finally {
+      clearTimeout(requestTimeout);
+      clearTimeout(slowNoticeTimeout);
+      setInfo("");
       setIsLoading(false);
     }
   };
@@ -52,6 +73,7 @@ export default function AdminLogin() {
     e.preventDefault();
     setError("");
     setSuccess("");
+    setInfo("");
 
     if (resetStep === "request") {
       if (!username || !resetKey) {
@@ -60,11 +82,18 @@ export default function AdminLogin() {
       }
 
       setIsLoading(true);
+      const controller = new AbortController();
+      const requestTimeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+      const slowNoticeTimeout = setTimeout(() => {
+        setInfo(RENDER_COLD_START_MESSAGE);
+      }, SLOW_NOTICE_MS);
+
       try {
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/forgot-password/request-token`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
+          signal: controller.signal,
           body: JSON.stringify({ username, resetKey }),
         });
 
@@ -78,8 +107,15 @@ export default function AdminLogin() {
           setSuccess("Reset token issued. Set your new password now.");
         }
       } catch (err) {
-        setError("Server connection failed. Is the backend running?");
+        if (err.name === "AbortError") {
+          setError("Server wake-up is taking longer than expected. Please try again shortly.");
+        } else {
+          setError("Server connection failed. Is the backend running?");
+        }
       } finally {
+        clearTimeout(requestTimeout);
+        clearTimeout(slowNoticeTimeout);
+        setInfo("");
         setIsLoading(false);
       }
       return;
@@ -91,11 +127,18 @@ export default function AdminLogin() {
     }
 
     setIsLoading(true);
+    const controller = new AbortController();
+    const requestTimeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+    const slowNoticeTimeout = setTimeout(() => {
+      setInfo(RENDER_COLD_START_MESSAGE);
+    }, SLOW_NOTICE_MS);
+
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/forgot-password/reset`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
+        signal: controller.signal,
         body: JSON.stringify({ username, newPassword, resetToken }),
       });
 
@@ -114,8 +157,15 @@ export default function AdminLogin() {
         setResetToken("");
       }
     } catch (err) {
-      setError("Server connection failed. Is the backend running?");
+      if (err.name === "AbortError") {
+        setError("Server wake-up is taking longer than expected. Please try again shortly.");
+      } else {
+        setError("Server connection failed. Is the backend running?");
+      }
     } finally {
+      clearTimeout(requestTimeout);
+      clearTimeout(slowNoticeTimeout);
+      setInfo("");
       setIsLoading(false);
     }
   };
@@ -137,6 +187,12 @@ export default function AdminLogin() {
         {success && (
           <div className="mb-4 p-3 border border-green-500 bg-green-950/40 text-green-300 text-sm rounded">
             [SUCCESS]: {success}
+          </div>
+        )}
+
+        {info && (
+          <div className="mb-4 p-3 border border-blue-500 bg-blue-950/30 text-blue-200 text-sm rounded">
+            [INFO]: {info}
           </div>
         )}
 

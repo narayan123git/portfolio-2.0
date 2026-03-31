@@ -103,7 +103,7 @@ exports.login = async (req, res) => {
 };
 
 exports.logout = async (req, res) => {
-  res.clearCookie('adminToken', buildCookieOptions());
+  res.clearCookie('adminToken', { path: '/', sameSite: 'lax' });
   res.status(200).json({ success: true, message: 'Logged out successfully.' });
 };
 
@@ -195,5 +195,61 @@ exports.resetPasswordWithToken = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error during password reset' });
+  }
+};
+
+// Test SMTP connectivity - Admin only
+exports.testMail = async (req, res) => {
+  try {
+    const { mailService } = require('../services/mailService');
+    const { verifyTransporter, sendMail } = require('../services/mailService');
+    
+    // First, verify transporter connection
+    try {
+      const verification = await verifyTransporter();
+      console.log('✓ Transporter verified:', verification);
+      
+      // Send a test email
+      const testTo = req.body.testEmail || process.env.ALERT_EMAIL_TO || process.env.SMTP_USER;
+      const success = await sendMail({
+        to: testTo,
+        subject: '🧪 Portfolio API - SMTP Test Email',
+        text: 'If you received this email, your SMTP configuration is working correctly!',
+        html: '<p>If you received this email, your SMTP configuration is working correctly!</p><p><strong>Sent at:</strong> ' + new Date().toISOString() + '</p>',
+      });
+      
+      if (success) {
+        return res.status(200).json({
+          success: true,
+          message: 'Test email sent successfully! Check your inbox.',
+          testEmail: testTo,
+          timestamp: new Date().toISOString(),
+        });
+      }
+    } catch (error) {
+      console.error('❌ SMTP test failed:', error.message);
+      return res.status(500).json({
+        success: false,
+        message: 'SMTP test failed',
+        error: error.message,
+        code: error.code,
+        details: {
+          host: process.env.SMTP_HOST,
+          port: process.env.SMTP_PORT,
+          secure: process.env.SMTP_SECURE,
+          connectionTimeout: process.env.SMTP_CONNECTION_TIMEOUT_MS,
+          greetingTimeout: process.env.SMTP_GREETING_TIMEOUT_MS,
+          socketTimeout: process.env.SMTP_SOCKET_TIMEOUT_MS,
+          ipv4Forced: process.env.SMTP_FORCE_IPV4,
+        },
+      });
+    }
+  } catch (error) {
+    console.error('Unexpected error in testMail:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error during SMTP test',
+      error: error.message,
+    });
   }
 };

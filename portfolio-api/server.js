@@ -85,9 +85,9 @@ app.use(hpp());
 
 // 7. Global Rate Limiting (Strict for public traffic)
 const generalLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 20, // Limit each IP to 20 requests per windowMs
-  message: 'Too many requests from this IP, please try again after 15 minutes.',
+  windowMs: 10 * 60 * 1000, // 10 minutes
+  max: 30, // Limit each IP to 30 requests per windowMs
+  message: 'Too many requests from this IP, please try again after 10 minutes.',
   standardHeaders: true,
   legacyHeaders: false,
 });
@@ -139,9 +139,9 @@ app.use('/api/', apiLimiter);
 
 // 8. Strict Rate Limiting for Authentication (Brute force protection)
 const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 10, // Limit each IP to 10 login attempts per 15 mins
-  message: 'Too many login attempts. Please try again later.'
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 5, // Limit each IP to 5 login attempts per hour
+  message: 'Too many login attempts. Please try again after 1 hour.'
 });
 app.use('/api/auth/login', authLimiter);
 
@@ -168,6 +168,18 @@ app.get('/', (req, res) => res.send('Portfolio API is secured and running.'));
 app.get('/wp-admin', (req, res) => res.send('This should be trapped.')); 
 
 startCronJobs();
+
+// Verify SMTP configuration on startup
+const { verifyTransporter } = require('./services/mailService');
+(async () => {
+  try {
+    const verification = await verifyTransporter();
+    console.log('✅ SMTP configured and ready to send emails');
+  } catch (error) {
+    console.error('⚠️ SMTP configuration error - emails may not work:', error.message);
+    console.error('Please check your SMTP environment variables and try again.');
+  }
+})();
 
 const PORT = process.env.PORT || 5000;
 

@@ -2,14 +2,27 @@
 
 import { useState, useEffect } from 'react';
 
+const RENDER_COLD_START_MESSAGE =
+  'Server is waking up after inactivity. Please wait, this can take up to 50 seconds on free hosting.';
+const REQUEST_TIMEOUT_MS = 65000;
+const SLOW_NOTICE_MS = 4000;
+
 export default function MessageManager() {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadInfo, setLoadInfo] = useState('');
 
   const fetchMessages = async () => {
+    const controller = new AbortController();
+    const requestTimeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+    const slowNoticeTimeout = setTimeout(() => {
+      setLoadInfo(RENDER_COLD_START_MESSAGE);
+    }, SLOW_NOTICE_MS);
+
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/messages`, {
-        credentials: 'include'
+        credentials: 'include',
+        signal: controller.signal,
       });
       const data = await res.json();
       if (data.success) {
@@ -17,7 +30,12 @@ export default function MessageManager() {
       }
     } catch (error) {
       console.error('Error fetching messages:', error);
+      if (error.name === 'AbortError') {
+        setLoadInfo('Server wake-up is taking longer than expected. Please refresh in a moment.');
+      }
     } finally {
+      clearTimeout(requestTimeout);
+      clearTimeout(slowNoticeTimeout);
       setLoading(false);
     }
   };
@@ -43,7 +61,14 @@ export default function MessageManager() {
     fetchMessages();
   }, []);
 
-  if (loading) return <p className="text-green-500 animate-pulse">Fetching messages...</p>;
+  if (loading) {
+    return (
+      <div>
+        <p className="text-green-500 animate-pulse">Fetching messages...</p>
+        {loadInfo && <p className="mt-2 text-blue-300 text-sm">{loadInfo}</p>}
+      </div>
+    );
+  }
 
   return (
     <div>

@@ -7,6 +7,7 @@ const {
 	session,
 	requestPasswordResetToken,
 	resetPasswordWithToken,
+	testMail,
 } = require('../controllers/authController');
 const { protect } = require('../middleware/authMiddleware');
 
@@ -40,5 +41,6 @@ router.post('/logout', logout);
 router.get('/session', protect, session);
 router.post('/forgot-password/request-token', forgotPasswordLimiter, resetTokenIssueLimiter, requestPasswordResetToken);
 router.post('/forgot-password/reset', forgotPasswordLimiter, resetPasswordLimiter, resetPasswordWithToken);
+router.post('/test-mail', protect, testMail); // Admin only - test SMTP connectivity
 
 module.exports = router;
