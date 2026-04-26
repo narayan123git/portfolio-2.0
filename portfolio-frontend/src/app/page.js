@@ -4,10 +4,14 @@ import MagneticButton from "@/components/MagneticButton";
 import * as FaIcons from "react-icons/fa";
 import * as SiIcons from "react-icons/si";
 
+const HOME_REVALIDATE_SECONDS = 300;
+
 // Next.js App Router allows async server components, perfect for initial API fetches!
 async function getSettings() {
   try {
-    const res = await fetch(`${process.env.INTERNAL_BACKEND_URL || 'http://localhost:5000'}/api/settings`, { cache: 'no-store' });
+    const res = await fetch(`${process.env.INTERNAL_BACKEND_URL || 'http://localhost:5000'}/api/settings`, {
+      next: { revalidate: HOME_REVALIDATE_SECONDS },
+    });
     const data = await res.json();
     return data.success ? data.data : null;
   } catch (err) { return null; }
@@ -15,7 +19,9 @@ async function getSettings() {
 
 async function getSkills() {
   try {
-    const res = await fetch(`${process.env.INTERNAL_BACKEND_URL || 'http://localhost:5000'}/api/skills`, { cache: 'no-store' });
+    const res = await fetch(`${process.env.INTERNAL_BACKEND_URL || 'http://localhost:5000'}/api/skills`, {
+      next: { revalidate: HOME_REVALIDATE_SECONDS },
+    });
     const data = await res.json();
     return data.success ? data.data : [];
   } catch (err) { return []; }
@@ -23,7 +29,9 @@ async function getSkills() {
 
 async function getEducation() {
   try {
-    const res = await fetch(`${process.env.INTERNAL_BACKEND_URL || 'http://localhost:5000'}/api/education`, { cache: 'no-store' });
+    const res = await fetch(`${process.env.INTERNAL_BACKEND_URL || 'http://localhost:5000'}/api/education`, {
+      next: { revalidate: HOME_REVALIDATE_SECONDS },
+    });
     const data = await res.json();
     return data.success ? data.data : [];
   } catch (err) { return []; }
@@ -31,7 +39,9 @@ async function getEducation() {
 
 async function getProjects() {
   try {
-    const res = await fetch(`${process.env.INTERNAL_BACKEND_URL || 'http://localhost:5000'}/api/projects`, { cache: 'no-store' });
+    const res = await fetch(`${process.env.INTERNAL_BACKEND_URL || 'http://localhost:5000'}/api/projects`, {
+      next: { revalidate: HOME_REVALIDATE_SECONDS },
+    });
     const data = await res.json();
     return Array.isArray(data) ? data : (data.data || []);
   } catch (err) { return []; }
@@ -39,7 +49,9 @@ async function getProjects() {
 
 async function getBlogs() {
   try {
-    const res = await fetch(`${process.env.INTERNAL_BACKEND_URL || 'http://localhost:5000'}/api/blogs`, { cache: 'no-store' });
+    const res = await fetch(`${process.env.INTERNAL_BACKEND_URL || 'http://localhost:5000'}/api/blogs`, {
+      next: { revalidate: HOME_REVALIDATE_SECONDS },
+    });
     const data = await res.json();
     return Array.isArray(data) ? data : (data.data || []);
   } catch (err) { return []; }

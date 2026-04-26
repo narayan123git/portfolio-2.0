@@ -1,8 +1,15 @@
 import "./globals.css";
-import HackerMode from "@/components/HackerMode";
-import CustomCursor from "@/components/CustomCursor";
 import Footer from "@/components/Footer";
 import { Space_Grotesk, JetBrains_Mono } from "next/font/google";
+import dynamic from "next/dynamic";
+
+const HackerMode = dynamic(() => import("@/components/HackerMode"), {
+  ssr: false,
+});
+
+const CustomCursor = dynamic(() => import("@/components/CustomCursor"), {
+  ssr: false,
+});
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
@@ -15,6 +22,7 @@ const jetBrainsMono = JetBrains_Mono({
 });
 
 export const metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || process.env.FRONTEND_URL || "http://localhost:3000"),
   title: "Narayan Paul | Engineering Portfolio",
   description: "Secure full-stack portfolio featuring projects, writing, and an admin command center.",
   icons: {

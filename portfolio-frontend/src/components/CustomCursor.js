@@ -6,13 +6,27 @@ export default function CustomCursor() {
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isHovering, setIsHovering] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
+  const [supportsFinePointer, setSupportsFinePointer] = useState(false);
   
   // Ref to track the actual DOM element for smoothing
   const cursorRef = useRef(null);
 
   useEffect(() => {
-    // Hide default cursor globally when this component mounts
-    document.body.style.cursor = 'none';
+    if (typeof window === 'undefined') return;
+
+    const mediaQuery = window.matchMedia('(pointer: fine)');
+    setSupportsFinePointer(mediaQuery.matches);
+
+    const onChange = (event) => setSupportsFinePointer(event.matches);
+    mediaQuery.addEventListener('change', onChange);
+
+    return () => {
+      mediaQuery.removeEventListener('change', onChange);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!supportsFinePointer) return;
 
     const updatePosition = (e) => {
       setPosition({ x: e.clientX, y: e.clientY });
@@ -32,36 +46,32 @@ export default function CustomCursor() {
     document.addEventListener('mouseenter', handleMouseEnter);
 
     return () => {
-      document.body.style.cursor = 'auto'; // Restore normal cursor on unmount
       window.removeEventListener('mousemove', updatePosition);
       document.removeEventListener('mouseleave', handleMouseLeave);
       document.removeEventListener('mouseenter', handleMouseEnter);
     };
-  }, []);
+  }, [supportsFinePointer]);
+
+  if (!supportsFinePointer) return null;
 
   if (!isVisible) return null;
 
   return (
     <div
       ref={cursorRef}
-      className={`fixed top-0 left-0 pointer-events-none z-[9999] mix-blend-difference transition-transform duration-100 ease-out`}
+      className={`fixed top-0 left-0 pointer-events-none z-[9999] transition-transform duration-75 ease-out`}
       style={{
         transform: `translate3d(${position.x}px, ${position.y}px, 0)`,
       }}
     >
-      {/* 
-        The "Terminal Block" cursor. 
-        It's a solid block that expands slightly when hovering over links.
-      */}
       <div 
-        className={`w-4 h-6 bg-green-500 transition-all duration-300 ${
+        className={`transition-all duration-200 border border-cyan-300/80 bg-cyan-300/15 backdrop-blur-[1px] shadow-[0_0_10px_rgba(34,211,238,0.4)] ${
           isHovering 
-            ? 'scale-150 rotate-90 rounded-sm' 
-            : 'scale-100 rotate-0 rounded-none animate-pulse'
+            ? 'w-5 h-5 rounded-full scale-110' 
+            : 'w-3 h-3 rounded-full scale-100'
         }`}
         style={{
-          // Center the block on the actual point
-          transform: 'translate(-50%, -50%)', 
+          transform: 'translate(-50%, -50%)',
         }}
       />
     </div>
