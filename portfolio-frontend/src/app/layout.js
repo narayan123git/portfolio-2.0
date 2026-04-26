@@ -1,15 +1,7 @@
 import "./globals.css";
 import Footer from "@/components/Footer";
+import ClientEnhancements from "@/components/ClientEnhancements";
 import { Space_Grotesk, JetBrains_Mono } from "next/font/google";
-import dynamic from "next/dynamic";
-
-const HackerMode = dynamic(() => import("@/components/HackerMode"), {
-  ssr: false,
-});
-
-const CustomCursor = dynamic(() => import("@/components/CustomCursor"), {
-  ssr: false,
-});
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
@@ -80,8 +72,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body className={`${spaceGrotesk.variable} ${jetBrainsMono.variable} site-body antialiased min-h-screen flex flex-col justify-between`}>
-        <CustomCursor />
-        <HackerMode />
+        <ClientEnhancements />
         <div className="flex-grow">
           {children}
         </div>
