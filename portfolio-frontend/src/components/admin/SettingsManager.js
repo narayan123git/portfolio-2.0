@@ -2,6 +2,18 @@
 
 import { useState, useEffect } from 'react';
 
+const parseResponseBody = async (response) => {
+  const rawBody = await response.text();
+
+  if (!rawBody) return {};
+
+  try {
+    return JSON.parse(rawBody);
+  } catch {
+    return { message: rawBody };
+  }
+};
+
 export default function SettingsManager() {
   const [settings, setSettings] = useState({
     resumeUrl: '',
@@ -64,7 +76,7 @@ export default function SettingsManager() {
           credentials: 'include',
           body: imageForm,
         });
-        const uploadData = await uploadRes.json();
+        const uploadData = await parseResponseBody(uploadRes);
         if (!uploadRes.ok) {
           throw new Error(uploadData.message || 'Profile image upload failed');
         }
@@ -79,7 +91,7 @@ export default function SettingsManager() {
           credentials: 'include',
           body: videoForm,
         });
-        const uploadVideoData = await uploadVideoRes.json();
+        const uploadVideoData = await parseResponseBody(uploadVideoRes);
         if (!uploadVideoRes.ok) {
           throw new Error(uploadVideoData.message || 'Home video upload failed');
         }

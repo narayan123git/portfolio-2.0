@@ -2,6 +2,18 @@
 
 import { useState, useEffect } from "react";
 
+const parseResponseBody = async (response) => {
+  const rawBody = await response.text();
+
+  if (!rawBody) return {};
+
+  try {
+    return JSON.parse(rawBody);
+  } catch {
+    return { message: rawBody };
+  }
+};
+
 export default function ProjectManager() {
   const [projects, setProjects] = useState([]);
   const [editingId, setEditingId] = useState(null);
@@ -58,7 +70,7 @@ export default function ProjectManager() {
           credentials: "include",
           body: imageForm,
         });
-        const uploadData = await uploadRes.json();
+        const uploadData = await parseResponseBody(uploadRes);
         if (!uploadRes.ok) throw new Error(uploadData.message || "Image upload failed");
         imageUrl = uploadData.imageUrl;
       }

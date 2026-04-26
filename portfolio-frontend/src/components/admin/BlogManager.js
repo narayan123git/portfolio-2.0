@@ -2,6 +2,18 @@
 
 import { useState, useEffect } from "react";
 
+const parseResponseBody = async (response) => {
+  const rawBody = await response.text();
+
+  if (!rawBody) return {};
+
+  try {
+    return JSON.parse(rawBody);
+  } catch {
+    return { message: rawBody };
+  }
+};
+
 export default function BlogManager() {
   const [blogs, setBlogs] = useState([]);
   const [editingId, setEditingId] = useState(null);
@@ -50,7 +62,7 @@ export default function BlogManager() {
           credentials: "include",
           body: imageForm,
         });
-        const uploadData = await uploadRes.json();
+        const uploadData = await parseResponseBody(uploadRes);
         if (!uploadRes.ok) throw new Error(uploadData.message || "Blog image upload failed");
         coverImageUrl = uploadData.imageUrl;
       }
