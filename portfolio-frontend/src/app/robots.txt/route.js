@@ -1,14 +1,13 @@
-import { SITE_URL } from "@/lib/siteConfig";
-
-export function GET() {
+export function GET(request) {
+  const siteUrl = new URL(request.url).origin;
   const content = [
     "User-agent: *",
     "Allow: /",
     "Disallow: /admin",
     "Disallow: /admin/",
     "",
-    `Sitemap: ${SITE_URL}/sitemap.xml`,
-    `Host: ${SITE_URL}`,
+    `Sitemap: ${siteUrl}/sitemap.xml`,
+    `Host: ${siteUrl}`,
     "",
   ].join("\n");
 

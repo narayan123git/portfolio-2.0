@@ -1,4 +1,4 @@
-import { SITE_URL, getApiUrl } from "@/lib/siteConfig";
+import { getApiUrl } from "@/lib/siteConfig";
 
 const SITEMAP_REVALIDATE_SECONDS = 600;
 
@@ -39,7 +39,8 @@ function buildUrlNode({ loc, lastmod, changefreq, priority }) {
   ].join("\n");
 }
 
-export async function GET() {
+export async function GET(request) {
+  const siteUrl = new URL(request.url).origin;
   const now = new Date();
   const staticRoutes = ["", "/blogs", "/projects", "/diary", "/contact"];
 
@@ -47,7 +48,7 @@ export async function GET() {
     const priority = route === "" ? "1.0" : "0.8";
     const changefreq = route === "" ? "daily" : "weekly";
     return buildUrlNode({
-      loc: `${SITE_URL}${route}`,
+      loc: `${siteUrl}${route}`,
       lastmod: now.toISOString(),
       changefreq,
       priority,
@@ -59,7 +60,7 @@ export async function GET() {
     .filter((blog) => typeof blog?.slug === "string" && blog.slug.trim())
     .map((blog) =>
       buildUrlNode({
-        loc: `${SITE_URL}/blogs/${blog.slug}`,
+        loc: `${siteUrl}/blogs/${blog.slug}`,
         lastmod: blog.createdAt ? new Date(blog.createdAt).toISOString() : now.toISOString(),
         changefreq: "weekly",
         priority: "0.7",
