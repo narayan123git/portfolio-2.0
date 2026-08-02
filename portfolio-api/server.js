@@ -158,6 +158,7 @@ app.use('/api/diary', require('./routes/diaryRoutes'));
 app.use('/api/upload', require('./routes/uploadRoutes'));
 app.use('/api/messages', require('./routes/messageRoutes'));
 app.use('/api/settings', require('./routes/settingRoutes'));
+app.use('/api/experience', require('./routes/experienceRoutes'));
 app.use('/api/skills', require('./routes/skillRoutes'));
 app.use('/api/education', require('./routes/educationRoutes'));
 app.use('/api/security', securityRoutes);

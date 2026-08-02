@@ -18,6 +18,7 @@ export default function SettingsManager() {
   const [settings, setSettings] = useState({
     resumeUrl: '',
     heroText: '',
+    homeParagraph: '',
     primaryColor: '#3b82f6',
     isHiring: true,
     currentStatus: '',
@@ -180,6 +181,18 @@ export default function SettingsManager() {
             onChange={handleChange}
             className="w-full bg-gray-800 border border-gray-700 rounded p-2 text-white"
             placeholder="e.g. Full Stack Developer & Designer"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-300 mb-1">Home Paragraph</label>
+          <textarea
+            name="homeParagraph"
+            value={settings.homeParagraph || ''}
+            onChange={handleChange}
+            rows="4"
+            className="w-full bg-gray-800 border border-gray-700 rounded p-2 text-white"
+            placeholder="Paragraph shown under the hero text on the home page"
           />
         </div>
 

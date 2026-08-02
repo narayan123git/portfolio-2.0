@@ -10,6 +10,7 @@ import MessageManager from "../../../components/admin/MessageManager";
 import SettingsManager from "../../../components/admin/SettingsManager";
 import SkillManager from "../../../components/admin/SkillManager";
 import EducationManager from "../../../components/admin/EducationManager";
+import ExperienceManager from "../../../components/admin/ExperienceManager";
 export default function AdminDashboard() {
   const router = useRouter();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -96,6 +97,12 @@ export default function AdminDashboard() {
             &gt; Education
           </button>
           <button
+            onClick={() => setActiveTab("experience")}
+            className={`block w-full text-left p-2 hover:bg-green-900/30 transition-colors rounded ${activeTab === "experience" ? "bg-green-900/50 text-white border-l-2 border-green-400" : ""}`}
+          >
+            &gt; Experience
+          </button>
+          <button
             onClick={() => setActiveTab("messages")}
             className={`block w-full text-left p-2 hover:bg-green-900/30 transition-colors rounded ${activeTab === "messages" ? "bg-green-900/50 text-white border-l-2 border-green-400" : ""}`}
           >
@@ -137,6 +144,7 @@ export default function AdminDashboard() {
           {activeTab === "diary" && <DiaryManager />}
           {activeTab === "skills" && <SkillManager />}
           {activeTab === "education" && <EducationManager />}
+          {activeTab === "experience" && <ExperienceManager />}
           {activeTab === "messages" && <MessageManager />}
           {activeTab === "settings" && <SettingsManager />}
           {activeTab === "security" && <SecurityManager />}

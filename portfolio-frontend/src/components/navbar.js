@@ -50,6 +50,7 @@ export default function Navbar() {
 
         <div className="mono-ui space-x-4 md:space-x-8 text-sm text-slate-200/80">
           <Link href="/projects" className="hover:text-orange-200">[ PROJECTS ]</Link>
+          <Link href="/#experience" className="hover:text-orange-200">[ EXPERIENCE ]</Link>
           <Link href="/blogs" className="hover:text-orange-200 hidden sm:inline">[ BLOGS ]</Link>
           <Link href="/diary" className="hover:text-orange-200 hidden sm:inline">[ DIARY ]</Link>
           <Link href="/contact" className="hover:text-orange-200">[ CONTACT ]</Link>

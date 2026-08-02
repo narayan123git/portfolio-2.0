@@ -10,7 +10,7 @@ const HOME_REVALIDATE_SECONDS = 300;
 async function getSettings() {
   try {
     const res = await fetch(`${process.env.INTERNAL_BACKEND_URL || 'http://localhost:5000'}/api/settings`, {
-      next: { revalidate: HOME_REVALIDATE_SECONDS },
+      cache: 'no-store',
     });
     const data = await res.json();
     return data.success ? data.data : null;
@@ -31,6 +31,16 @@ async function getEducation() {
   try {
     const res = await fetch(`${process.env.INTERNAL_BACKEND_URL || 'http://localhost:5000'}/api/education`, {
       next: { revalidate: HOME_REVALIDATE_SECONDS },
+    });
+    const data = await res.json();
+    return data.success ? data.data : [];
+  } catch (err) { return []; }
+}
+
+async function getExperience() {
+  try {
+    const res = await fetch(`${process.env.INTERNAL_BACKEND_URL || 'http://localhost:5000'}/api/experience`, {
+      cache: 'no-store',
     });
     const data = await res.json();
     return data.success ? data.data : [];
@@ -104,6 +114,7 @@ export default async function Home() {
     getProjects(),
     getBlogs(),
   ]);
+  const experience = await getExperience();
   const groupedSkills = skills.reduce((acc, skill) => {
     const category = skill.category || "Other";
     if (!acc[category]) acc[category] = [];
@@ -114,6 +125,7 @@ export default async function Home() {
   const featuredProjects = projects.slice(0, 3);
   const featuredBlogs = blogs.slice(0, 3);
   const resumeUrl = normalizeExternalUrl(settings?.resumeUrl);
+  const homeParagraph = settings?.homeParagraph || 'I care about consistency, strong fundamentals, and practical implementation. Whether it is DSA, backend design, or deep learning, I try to understand things deeply instead of rushing through them.';
 
   return (
     <main className="min-h-screen bg-[#050914] text-slate-100 selection:bg-orange-500/30 relative overflow-hidden">
@@ -147,7 +159,7 @@ export default async function Home() {
             </p>
             
             <p className="text-slate-400/80 text-sm max-w-xl leading-relaxed">
-              I care about consistency, strong fundamentals, and practical implementation. Whether it is DSA, backend design, or deep learning, I try to understand things deeply instead of rushing through them.
+              {homeParagraph}
             </p>
 
             <div className="pt-6 flex gap-4 flex-wrap">
@@ -267,6 +279,50 @@ export default async function Home() {
             Overall, I see myself as someone still evolving - not chasing shortcuts, but focusing on steady, meaningful growth. I am not only interested in learning technologies; I am interested in using them to build systems that are efficient, reliable, and impactful.
           </p>
         </div>
+      </section>
+
+      {/* EXPERIENCE SECTION */}
+      <section id="experience" className="max-w-6xl mx-auto mt-32 px-6">
+        <div className="flex items-end justify-between gap-4 mb-10 border-b border-white/10 pb-4">
+          <h2 className="text-3xl font-bold text-white">Experience</h2>
+          <span className="mono-ui text-sm text-orange-300/80">// career timeline</span>
+        </div>
+
+        {experience.length > 0 ? (
+          <div className="grid gap-6">
+            {experience.map((item) => (
+              <article key={item._id} className="rounded-2xl bg-[#0a0f1d] border border-white/10 p-6 md:p-7 shadow-lg hover:border-orange-400/30 transition-colors">
+                <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
+                  <div>
+                    <h3 className="text-2xl font-bold text-white">{item.role}</h3>
+                    <p className="text-orange-300 mt-1 text-sm uppercase tracking-[0.2em]">{item.company}</p>
+                    {item.location && <p className="text-slate-400 text-sm mt-1">{item.location}</p>}
+                  </div>
+                  <div className="mono-ui text-xs text-slate-400 px-3 py-1 rounded-full border border-white/10 bg-white/5 self-start">
+                    {item.startDate} — {item.isCurrent ? 'PRESENT' : (item.endDate || 'END DATE TBD')}
+                  </div>
+                </div>
+
+                {item.description && <p className="text-slate-300 text-sm leading-relaxed mt-5 whitespace-pre-wrap">{item.description}</p>}
+                {item.responsibilities && <p className="text-slate-400 text-sm leading-relaxed mt-4 whitespace-pre-wrap">{item.responsibilities}</p>}
+
+                {Array.isArray(item.techStack) && item.techStack.length > 0 && (
+                  <div className="mt-5 flex flex-wrap gap-2">
+                    {item.techStack.map((tech) => (
+                      <span key={`${item._id}-${tech}`} className="mono-ui text-[10px] px-2.5 py-1 rounded bg-white/5 border border-white/10 text-slate-300">
+                        {tech}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </article>
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-2xl border border-dashed border-white/10 bg-[#0a0f1d] p-6 text-slate-400 text-sm">
+            No experience records yet. Add the first entry from the admin dashboard.
+          </div>
+        )}
       </section>
 
       {/* FEATURED PROJECTS */}

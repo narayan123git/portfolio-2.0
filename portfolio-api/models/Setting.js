@@ -17,6 +17,10 @@ const settingSchema = new mongoose.Schema({
     type: String,
     default: 'Welcome to my Portfolio'
   },
+  homeParagraph: {
+    type: String,
+    default: 'I care about consistency, strong fundamentals, and practical implementation. Whether it is DSA, backend design, or deep learning, I try to understand things deeply instead of rushing through them.'
+  },
   primaryColor: {
     type: String,
     default: '#3b82f6' // Default tailwind blue
