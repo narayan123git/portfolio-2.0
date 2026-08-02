@@ -76,7 +76,7 @@ exports.updateProject = async (req, res) => {
     const updatedProject = await Project.findByIdAndUpdate(
       req.params.id, 
       updateData,
-      { returnDocument: 'after', runValidators: true } // Returns the newly updated document
+      { new: true, runValidators: true } // Returns the newly updated document
     );
     
     if (!updatedProject) {

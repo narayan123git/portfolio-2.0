@@ -59,7 +59,7 @@ exports.updateBlog = async (req, res) => {
     const updatedBlog = await Blog.findByIdAndUpdate(
       req.params.id, 
       req.body, 
-      { returnDocument: 'after' } // Returns the newly updated document
+      { new: true } // Returns the newly updated document
     );
     
     if (!updatedBlog) {

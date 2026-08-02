@@ -36,7 +36,7 @@ const createExperience = async (req, res) => {
 const updateExperience = async (req, res) => {
   try {
     const experience = await Experience.findByIdAndUpdate(req.params.id, req.body, {
-      returnDocument: 'after',
+      new: true,
       runValidators: true,
     });
     if (!experience) return res.status(404).json({ success: false, message: 'Experience record not found' });

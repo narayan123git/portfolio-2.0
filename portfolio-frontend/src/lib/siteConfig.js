@@ -1,7 +1,7 @@
 const SITE_URL = (
   process.env.NEXT_PUBLIC_SITE_URL ||
   process.env.FRONTEND_URL ||
-  "http://localhost:3000"
+  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000")
 ).replace(/\/$/, "");
 
 const INTERNAL_BACKEND_URL = (process.env.INTERNAL_BACKEND_URL || "").replace(/\/$/, "");
