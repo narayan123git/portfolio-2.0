@@ -103,6 +103,7 @@ export default function ProjectManager() {
       setImage(null);
       setEditingId(null);
       fetchProjects(); // Refresh the data table instantly
+      fetch('/api/revalidate?tag=content').catch(() => {});
       
       setTimeout(() => setStatus({ loading: false, message: "", type: "" }), 3000);
 
@@ -162,6 +163,7 @@ export default function ProjectManager() {
       });
 
       fetchProjects();
+      fetch('/api/revalidate?tag=content').catch(() => {});
     } catch (err) {
       console.error("Reorder failed", err);
     }
@@ -176,7 +178,10 @@ export default function ProjectManager() {
         method: "DELETE",
         credentials: "include",
       });
-      if (res.ok) fetchProjects();
+      if (res.ok) {
+        fetchProjects();
+        fetch('/api/revalidate?tag=content').catch(() => {});
+      }
     } catch (err) {
       console.error("Delete failed", err);
     }

@@ -48,6 +48,7 @@ export default function DiaryManager() {
       setFormData({ content: "", currentStatus: "CODING" });
       setEditingId(null);
       fetchEntries(); // Refresh the table
+      fetch('/api/revalidate?tag=content').catch(() => {});
       setTimeout(() => setStatus({ loading: false, message: "", type: "" }), 3000);
     } catch (error) {
       setStatus({ loading: false, message: `[ERROR]: ${error.message}`, type: "error" });
@@ -67,7 +68,10 @@ export default function DiaryManager() {
         method: "DELETE",
         credentials: "include",
       });
-      if (res.ok) fetchEntries();
+      if (res.ok) {
+        fetchEntries();
+        fetch('/api/revalidate?tag=content').catch(() => {});
+      }
     } catch (err) {
       console.error("Delete failed", err);
     }

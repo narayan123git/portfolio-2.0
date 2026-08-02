@@ -120,6 +120,7 @@ export default function SettingsManager() {
         setSettings(data.data);
         setProfileImage(null);
         setHomeVideo(null);
+        fetch('/api/revalidate?tag=content').catch(() => {});
       }
     } catch (error) {
       console.error('Error saving settings:', error);

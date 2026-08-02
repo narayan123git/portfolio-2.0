@@ -10,7 +10,7 @@ const HOME_REVALIDATE_SECONDS = 300;
 async function getSettings() {
   try {
     const res = await fetch(`${process.env.INTERNAL_BACKEND_URL || 'http://localhost:5000'}/api/settings`, {
-      cache: 'no-store',
+      next: { revalidate: 3600, tags: ['content'] },
     });
     const data = await res.json();
     return data.success ? data.data : null;
@@ -20,7 +20,7 @@ async function getSettings() {
 async function getSkills() {
   try {
     const res = await fetch(`${process.env.INTERNAL_BACKEND_URL || 'http://localhost:5000'}/api/skills`, {
-      next: { revalidate: HOME_REVALIDATE_SECONDS },
+      next: { revalidate: 3600, tags: ['content'] },
     });
     const data = await res.json();
     return data.success ? data.data : [];
@@ -30,7 +30,7 @@ async function getSkills() {
 async function getEducation() {
   try {
     const res = await fetch(`${process.env.INTERNAL_BACKEND_URL || 'http://localhost:5000'}/api/education`, {
-      cache: 'no-store',
+      next: { revalidate: 3600, tags: ['content'] },
     });
     const data = await res.json();
     return data.success ? data.data : [];
@@ -40,7 +40,7 @@ async function getEducation() {
 async function getExperience() {
   try {
     const res = await fetch(`${process.env.INTERNAL_BACKEND_URL || 'http://localhost:5000'}/api/experience`, {
-      cache: 'no-store',
+      next: { revalidate: 3600, tags: ['content'] },
     });
     const data = await res.json();
     return data.success ? data.data : [];
@@ -77,7 +77,7 @@ const getHomeSections = (settings) => {
 async function getProjects() {
   try {
     const res = await fetch(`${process.env.INTERNAL_BACKEND_URL || 'http://localhost:5000'}/api/projects`, {
-      next: { revalidate: HOME_REVALIDATE_SECONDS },
+      next: { revalidate: 3600, tags: ['content'] },
     });
     const data = await res.json();
     return Array.isArray(data) ? data : (data.data || []);
@@ -87,7 +87,7 @@ async function getProjects() {
 async function getBlogs() {
   try {
     const res = await fetch(`${process.env.INTERNAL_BACKEND_URL || 'http://localhost:5000'}/api/blogs`, {
-      next: { revalidate: HOME_REVALIDATE_SECONDS },
+      next: { revalidate: 3600, tags: ['content'] },
     });
     const data = await res.json();
     return Array.isArray(data) ? data : (data.data || []);

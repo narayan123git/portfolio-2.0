@@ -92,6 +92,7 @@ export default function BlogManager() {
       setCoverImage(null);
       setEditingId(null);
       fetchBlogs(); // Refresh the table
+      fetch('/api/revalidate?tag=content').catch(() => {});
       
       setTimeout(() => setStatus({ loading: false, message: "", type: "" }), 3000);
     } catch (error) {
@@ -125,7 +126,10 @@ export default function BlogManager() {
         credentials: "include",
       });
       
-      if (res.ok) fetchBlogs(); // Refresh the table
+      if (res.ok) {
+        fetchBlogs(); // Refresh the table
+        fetch('/api/revalidate?tag=content').catch(() => {});
+      }
     } catch (err) {
       console.error("Delete failed", err);
     }

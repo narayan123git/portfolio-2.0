@@ -43,6 +43,7 @@ export default function EducationManager() {
         setFormData({ institution: '', location: '', degree: '', specialization: '', boardOrUniversity: '', score: '', startDate: '', endDate: '', description: '', activities: '', isCurrent: false });
         setEditingId(null);
         fetchEducation();
+        fetch('/api/revalidate?tag=content').catch(() => {});
       }
     } catch (err) {
       console.error(err);
@@ -75,7 +76,10 @@ export default function EducationManager() {
         method: 'DELETE',
         credentials: 'include'
       });
-      if (res.ok) fetchEducation();
+      if (res.ok) {
+        fetchEducation();
+        fetch('/api/revalidate?tag=content').catch(() => {});
+      }
     } catch (err) {
       console.error(err);
     }

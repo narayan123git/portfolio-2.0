@@ -118,6 +118,7 @@ export default function HomeContentManager() {
           homeSections: Array.isArray(data.data.homeSections) && data.data.homeSections.length > 0 ? data.data.homeSections : defaultHomeSections(),
         });
         setMessage('Home sections saved');
+        fetch('/api/revalidate?tag=content').catch(() => {});
       }
     } catch (error) {
       console.error('Error saving home content:', error);

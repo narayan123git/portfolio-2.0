@@ -90,6 +90,7 @@ export default function ExperienceManager() {
 
       resetForm();
       fetchExperience();
+      fetch('/api/revalidate?tag=content').catch(() => {});
       setStatus({ type: 'success', message: editingId ? 'Experience updated' : 'Experience added' });
     } catch (error) {
       console.error(error);
@@ -126,6 +127,7 @@ export default function ExperienceManager() {
 
       if (res.ok) {
         fetchExperience();
+        fetch('/api/revalidate?tag=content').catch(() => {});
         setStatus({ type: 'success', message: 'Experience deleted' });
       }
     } catch (error) {

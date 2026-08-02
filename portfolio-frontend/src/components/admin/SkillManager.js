@@ -46,6 +46,7 @@ export default function SkillManager() {
         setFormData(initialFormState);
         setEditingId(null);
         fetchSkills();
+        fetch('/api/revalidate?tag=content').catch(() => {});
       }
     } catch (err) {
       console.error(err);
@@ -72,7 +73,10 @@ export default function SkillManager() {
         method: 'DELETE',
         credentials: 'include'
       });
-      if (res.ok) fetchSkills();
+      if (res.ok) {
+        fetchSkills();
+        fetch('/api/revalidate?tag=content').catch(() => {});
+      }
     } catch (err) {
       console.error(err);
     }
