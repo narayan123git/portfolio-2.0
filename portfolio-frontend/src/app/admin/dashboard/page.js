@@ -11,6 +11,7 @@ import SettingsManager from "../../../components/admin/SettingsManager";
 import SkillManager from "../../../components/admin/SkillManager";
 import EducationManager from "../../../components/admin/EducationManager";
 import ExperienceManager from "../../../components/admin/ExperienceManager";
+import HomeContentManager from "../../../components/admin/HomeContentManager";
 export default function AdminDashboard() {
   const router = useRouter();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -115,6 +116,12 @@ export default function AdminDashboard() {
             &gt; Universal Settings
           </button>
           <button
+            onClick={() => setActiveTab("homecontent")}
+            className={`block w-full text-left p-2 hover:bg-green-900/30 transition-colors rounded ${activeTab === "homecontent" ? "bg-green-900/50 text-white border-l-2 border-green-400" : ""}`}
+          >
+            &gt; Home Content
+          </button>
+          <button
             onClick={() => setActiveTab("security")}
             className={`block w-full text-left p-2 hover:bg-green-900/30 transition-colors rounded ${activeTab === "security" ? "bg-green-900/50 text-white border-l-2 border-green-400" : ""}`}
           >
@@ -147,6 +154,7 @@ export default function AdminDashboard() {
           {activeTab === "experience" && <ExperienceManager />}
           {activeTab === "messages" && <MessageManager />}
           {activeTab === "settings" && <SettingsManager />}
+          {activeTab === "homecontent" && <HomeContentManager />}
           {activeTab === "security" && <SecurityManager />}
         </div>
       </main>

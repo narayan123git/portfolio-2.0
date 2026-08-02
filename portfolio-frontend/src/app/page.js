@@ -47,6 +47,33 @@ async function getExperience() {
   } catch (err) { return []; }
 }
 
+const getHomeSections = (settings) => {
+  if (Array.isArray(settings?.homeSections) && settings.homeSections.length > 0) {
+    return settings.homeSections;
+  }
+
+  return [
+    {
+      title: 'My Journey So Far',
+      eyebrow: '~/from_curiosity_to_building',
+      body: 'I did not get into computer science because it was trendy. I got into it because I genuinely enjoyed solving problems.\n\nEarly on, I was naturally drawn to mathematics and logical thinking. That curiosity translated into consistent academics - around 96% in Class 10, strong performance in Class 12, and then JEE Main.\n\nAt NIT Durgapur (CSE), my focus shifted from just scoring to truly understanding and building. Maintaining a CGPA around 9.4 matters to me, but what matters more is how I used my time outside the classroom.',
+      accent: 'orange',
+    },
+    {
+      title: 'How I Learn',
+      eyebrow: '~/how_i_learn',
+      body: 'I have always seen myself as a builder. During my early phase, I explored web development and built a full-stack MERN project where I handled backend logic, real-time features, and system design decisions.\n\nI have solved 300+ DSA problems, not for numbers, but to train clear thinking under constraints and to stay patient when solutions do not come quickly.\n\nRecently, I have been exploring Machine Learning and Deep Learning through structured learning and hands-on experimentation, especially in computer vision and meaningful applications like healthcare.\n\nOutside coding, I enjoy chess and creative downtime. Both help me reset and improve how I think about complex problems.',
+      accent: 'blue',
+    },
+    {
+      title: 'Growth Mindset',
+      eyebrow: '~/steady_progress',
+      body: 'Overall, I see myself as someone still evolving - not chasing shortcuts, but focusing on steady, meaningful growth. I am not only interested in learning technologies; I am interested in using them to build systems that are efficient, reliable, and impactful.',
+      accent: 'slate',
+    },
+  ];
+};
+
 async function getProjects() {
   try {
     const res = await fetch(`${process.env.INTERNAL_BACKEND_URL || 'http://localhost:5000'}/api/projects`, {
@@ -126,6 +153,7 @@ export default async function Home() {
   const featuredBlogs = blogs.slice(0, 3);
   const resumeUrl = normalizeExternalUrl(settings?.resumeUrl);
   const homeParagraph = settings?.homeParagraph || 'I care about consistency, strong fundamentals, and practical implementation. Whether it is DSA, backend design, or deep learning, I try to understand things deeply instead of rushing through them.';
+  const homeSections = getHomeSections(settings);
 
   return (
     <main className="min-h-screen bg-[#050914] text-slate-100 selection:bg-orange-500/30 relative overflow-hidden">
@@ -232,53 +260,43 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* NEW: ACADEMIC & PERSONAL MILESTONES */}
+      {/* HOME CONTENT */}
       <section className="max-w-6xl mx-auto mt-32 px-6">
-        <div className="relative rounded-2xl bg-gradient-to-br from-[#0a0f1d] to-[#111726] border border-orange-300/20 p-8 md:p-12 overflow-hidden shadow-2xl">
-          <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-orange-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none"></div>
-          
-          <h2 className="text-3xl font-bold text-white mb-8 relative z-10 border-b border-white/10 pb-4">
-            My Journey So Far
-          </h2>
-          
-          <div className="grid md:grid-cols-2 gap-12 relative z-10">
-            <div>
-               <h3 className="text-lg font-semibold text-orange-300 mb-4 mono-ui tracking-wide">~/from_curiosity_to_building</h3>
-               <div className="space-y-4 text-slate-300/90 text-sm leading-relaxed">
-                 <p className="bg-black/20 p-4 rounded-lg border border-white/5">
-                   I did not get into computer science because it was trendy. I got into it because I genuinely enjoyed solving problems.
-                 </p>
-                 <p className="bg-black/20 p-4 rounded-lg border border-white/5">
-                   Early on, I was naturally drawn to mathematics and logical thinking. That curiosity translated into consistent academics - around 96% in Class 10, strong performance in Class 12, and then JEE Main.
-                 </p>
-                 <p className="bg-black/20 p-4 rounded-lg border border-white/5">
-                   At NIT Durgapur (CSE), my focus shifted from just scoring to truly understanding and building. Maintaining a CGPA around 9.4 matters to me, but what matters more is how I used my time outside the classroom.
-                 </p>
-               </div>
-            </div>
-            <div className="flex flex-col justify-center">
-               <h3 className="text-lg font-semibold text-blue-300 mb-4 mono-ui tracking-wide">~/how_i_learn</h3>
-               <div className="bg-blue-900/10 border border-blue-400/20 p-6 rounded-xl text-slate-300/90 text-sm leading-relaxed space-y-4">
-                 <p>
-                   I have always seen myself as a builder. During my early phase, I explored web development and built a full-stack MERN project where I handled backend logic, real-time features, and system design decisions.
-                 </p>
-                 <p>
-                   I have solved 250+ DSA problems, not for numbers, but to train clear thinking under constraints and to stay patient when solutions do not come quickly.
-                 </p>
-                 <p>
-                   Recently, I have been exploring Machine Learning and Deep Learning through structured learning and hands-on experimentation, especially in computer vision and meaningful applications like healthcare.
-                 </p>
-                 <p>
-                   Outside coding, I enjoy chess and creative downtime. Both help me reset and improve how I think about complex problems.
-                 </p>
-               </div>
-            </div>
-          </div>
-
-          <p className="mt-8 text-slate-300/90 text-sm leading-relaxed relative z-10 bg-black/20 p-4 rounded-lg border border-white/5">
-            Overall, I see myself as someone still evolving - not chasing shortcuts, but focusing on steady, meaningful growth. I am not only interested in learning technologies; I am interested in using them to build systems that are efficient, reliable, and impactful.
-          </p>
+        <div className="flex items-end justify-between gap-4 mb-10 border-b border-white/10 pb-4">
+          <h2 className="text-3xl font-bold text-white">Home Content</h2>
+          <span className="mono-ui text-sm text-orange-300/80">// editable from admin</span>
         </div>
+
+        {homeSections.length > 0 ? (
+          <div className="grid gap-6">
+            {homeSections.map((section) => {
+              const accentClass = section.accent === 'blue'
+                ? 'border-blue-400/20 bg-blue-900/10'
+                : section.accent === 'green'
+                  ? 'border-emerald-400/20 bg-emerald-900/10'
+                  : section.accent === 'slate'
+                    ? 'border-slate-400/20 bg-slate-900/40'
+                    : 'border-orange-300/20 bg-gradient-to-br from-[#0a0f1d] to-[#111726]';
+
+              return (
+                <article key={`${section.title}-${section.eyebrow}`} className={`relative rounded-2xl border p-8 md:p-10 overflow-hidden shadow-2xl ${accentClass}`}>
+                  <div className="absolute top-0 right-0 w-[380px] h-[380px] bg-white/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none"></div>
+                  <div className="relative z-10 max-w-4xl">
+                    {section.eyebrow && <h3 className="text-lg font-semibold text-orange-300 mb-4 mono-ui tracking-wide">{section.eyebrow}</h3>}
+                    {section.title && <h2 className="text-3xl font-bold text-white mb-5">{section.title}</h2>}
+                    <div className="space-y-4 text-slate-300/90 text-sm leading-relaxed whitespace-pre-wrap">
+                      {section.body}
+                    </div>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="rounded-2xl border border-dashed border-white/10 bg-[#0a0f1d] p-6 text-slate-400 text-sm">
+            No home content sections yet. Add them from the admin dashboard.
+          </div>
+        )}
       </section>
 
       {/* EXPERIENCE SECTION */}

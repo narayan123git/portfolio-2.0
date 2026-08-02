@@ -17,7 +17,13 @@ const getExperience = async (req, res) => {
 // @access  Private
 const createExperience = async (req, res) => {
   try {
-    const experience = await Experience.create(req.body);
+    const payload = { ...req.body };
+    if (payload.order === undefined || payload.order === null || payload.order === '') {
+      const lastItem = await Experience.findOne().sort({ order: -1, createdAt: -1 }).lean();
+      payload.order = lastItem ? Number(lastItem.order || 0) + 1 : 1;
+    }
+
+    const experience = await Experience.create(payload);
     res.status(201).json({ success: true, data: experience });
   } catch (error) {
     res.status(400).json({ success: false, message: error.message });

@@ -2,10 +2,13 @@
 
 import { useEffect, useState } from 'react';
 
+const getApiBase = () => (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000').replace(/\/$/, '');
+
 export default function ExperienceManager() {
   const [experienceList, setExperienceList] = useState([]);
   const [editingId, setEditingId] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [status, setStatus] = useState({ type: '', message: '' });
   const [formData, setFormData] = useState({
     company: '',
     role: '',
@@ -21,7 +24,7 @@ export default function ExperienceManager() {
 
   const fetchExperience = async () => {
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/experience`);
+      const res = await fetch(`${getApiBase()}/experience`);
       const data = await res.json();
       if (data.success) {
         setExperienceList(data.data);
@@ -59,6 +62,7 @@ export default function ExperienceManager() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setStatus({ type: '', message: '' });
 
     try {
       const techStack = typeof formData.techStack === 'string'
@@ -67,8 +71,8 @@ export default function ExperienceManager() {
 
       const method = editingId ? 'PUT' : 'POST';
       const url = editingId
-        ? `${process.env.NEXT_PUBLIC_API_URL}/experience/${editingId}`
-        : `${process.env.NEXT_PUBLIC_API_URL}/experience`;
+        ? `${getApiBase()}/experience/${editingId}`
+        : `${getApiBase()}/experience`;
 
       const res = await fetch(url, {
         method,
@@ -80,13 +84,16 @@ export default function ExperienceManager() {
       });
 
       if (!res.ok) {
-        throw new Error('Failed to save experience record');
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.message || 'Failed to save experience record');
       }
 
       resetForm();
       fetchExperience();
+      setStatus({ type: 'success', message: editingId ? 'Experience updated' : 'Experience added' });
     } catch (error) {
       console.error(error);
+      setStatus({ type: 'error', message: error.message || 'Failed to save experience record' });
     } finally {
       setLoading(false);
     }
@@ -104,7 +111,7 @@ export default function ExperienceManager() {
       description: item.description || '',
       responsibilities: item.responsibilities || '',
       techStack: Array.isArray(item.techStack) ? item.techStack.join(', ') : '',
-      order: item.order || 0,
+        order: item.order ?? 0,
     });
   };
 
@@ -112,16 +119,18 @@ export default function ExperienceManager() {
     if (!window.confirm('Delete this experience record?')) return;
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/experience/${id}`, {
+      const res = await fetch(`${getApiBase()}/experience/${id}`, {
         method: 'DELETE',
         credentials: 'include',
       });
 
       if (res.ok) {
         fetchExperience();
+        setStatus({ type: 'success', message: 'Experience deleted' });
       }
     } catch (error) {
       console.error(error);
+      setStatus({ type: 'error', message: 'Delete failed' });
     }
   };
 
@@ -130,6 +139,10 @@ export default function ExperienceManager() {
       <h2 className="text-2xl text-white mb-6">Experience Manager</h2>
 
       <form onSubmit={handleSubmit} className="bg-gray-800 p-6 rounded-lg mb-8 space-y-4 border border-gray-700">
+        <div className="flex items-center justify-between gap-4">
+          <h3 className="text-xl font-bold text-white">{editingId ? 'EDIT_EXPERIENCE' : 'ADD_NEW_EXPERIENCE'}</h3>
+          {status.message && <span className={`text-sm ${status.type === 'error' ? 'text-red-500' : 'text-green-500'}`}>{status.message}</span>}
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <input
             type="text"
@@ -186,18 +199,18 @@ export default function ExperienceManager() {
             <span>Current Role</span>
           </label>
           <input
-            type="number"
-            placeholder="Display Order"
-            name="order"
-            value={formData.order}
-            onChange={handleChange}
-            className="p-2 bg-gray-900 border border-gray-700 rounded text-white w-full"
-          />
-          <input
             type="text"
             placeholder="Tech stack (comma separated)"
             name="techStack"
             value={formData.techStack}
+            onChange={handleChange}
+            className="p-2 bg-gray-900 border border-gray-700 rounded text-white w-full md:col-span-2"
+          />
+          <input
+            type="number"
+            placeholder="Display Order"
+            name="order"
+            value={formData.order}
             onChange={handleChange}
             className="p-2 bg-gray-900 border border-gray-700 rounded text-white w-full md:col-span-2"
           />
@@ -239,6 +252,7 @@ export default function ExperienceManager() {
               <h3 className="font-bold text-blue-400 text-lg">{item.role}</h3>
               <p className="text-gray-300">{item.company}</p>
               {item.location && <p className="text-xs text-gray-500">{item.location}</p>}
+              <p className="text-xs text-slate-400 mt-1">Order: {item.order ?? 0}</p>
               <p className="text-xs text-gray-500 mt-1">{item.startDate} — {item.isCurrent ? 'Present' : item.endDate}</p>
               {item.description && <p className="text-sm text-gray-400 mt-2 whitespace-pre-wrap">{item.description}</p>}
               {item.responsibilities && <p className="text-sm text-blue-200/80 mt-2 whitespace-pre-wrap">{item.responsibilities}</p>}
