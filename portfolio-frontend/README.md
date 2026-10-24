@@ -19,6 +19,8 @@ Next.js 16 frontend for the full-stack portfolio platform. This app renders all 
 - Introduced shared URL config helper for consistent backend/frontend env handling.
 - Updated custom cursor to keep native cursor behavior with subtle visual accent.
 - Added UI support for admin forgot-password flow.
+- Added a protected Admin Guide tab covering create, update, and delete workflows for every dashboard section.
+- Added Markdown blog editing with Cloudinary hero images, Cloudinary inline uploads, and Google Drive inline image links.
 - Projects page no longer uses text search; now focuses on stack and language filters.
 - Applied visual redesign updates in global styles, navbar, footer, and shared page atmosphere.
 - Added support in skill displays for custom details entered under Other category.
@@ -57,6 +59,24 @@ npm run dev
 
 Then open http://localhost:3000.
 
+The API runs separately from `portfolio-api`:
+
+```bash
+cd ../portfolio-api
+npm install
+npm start
+```
+
+Keep API secrets in a local `.env` file and do not commit it.
+
+## Admin Guide
+
+After logging in at `/admin`, open the **Guide** tab in `/admin/dashboard`. It explains how to create, update, and delete content in Projects, Blogs, Diary, Skills, Education, Experience, Home Content, Universal Settings, Messages, and Security Logs.
+
+For inline images, paste any publicly accessible image URL into the blog editor and click **INSERT IMAGE URL** at the desired cursor position. Google Drive links are converted automatically; set the Drive file permission to **Anyone with the link / Viewer** first. The cover image remains a separate Cloudinary upload.
+
+Blog content is raw Markdown, so normal text can be pasted beside headings, lists, links, code, and images. Long-form blog requests support up to `1mb` of JSON content.
+
 ### SEO Endpoints
 
 - http://localhost:3000/robots.txt
@@ -74,5 +94,7 @@ Then open http://localhost:3000.
 - `src/app/robots.txt/route.js` - Robots route
 - `src/lib/siteConfig.js` - Shared site/API URL resolution
 - `src/app/admin/page.js` - Admin login and forgot-password form
+- `src/app/admin/dashboard/page.js` - Authenticated admin dashboard and module navigation
 - `src/components/admin/` - Admin dashboard modules
+- `src/components/admin/GuideManager.js` - Complete in-dashboard admin guide
 - `src/app/globals.css` - Global visual theme

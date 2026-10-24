@@ -14,7 +14,11 @@
 
 ---
 
-## 🆕 Recent Updates (March 2026)
+## 🆕 Recent Updates (October 2026)
+
+- Added a protected Admin Guide covering create, update, and delete workflows for every dashboard section.
+- Added long-form blog support with a `1mb` JSON request limit and clearer blog save errors.
+- Added inline blog image controls for Cloudinary uploads and public Google Drive sharing links.
 
 - Added admin-managed **Home Media** controls: upload profile photo (Cloudinary), upload intro video, and toggle video visibility.
 - Added **Blog cover image upload** support from admin, with rendering on blog list and blog detail pages.
@@ -143,6 +147,17 @@ Accessible at `/admin` — protected behind JWT authentication. Once logged in, 
 | **MessageManager** | Read contact messages sent by visitors |
 | **SecurityManager** | View the honeypot security log — trapped IPs & attempted endpoints |
 | **SettingsManager** | Edit hero text, primary accent color, social links, resume URL, hiring status, profile image, and home video visibility |
+| **GuideManager** | Explain create, update, delete, Markdown, and image workflows for every admin module |
+
+The authenticated dashboard includes a **Guide** tab at `/admin/dashboard`. It is the in-app reference for managing Projects, Blogs, Diary, Skills, Education, Experience, Home Content, Settings, Messages, and Security Logs.
+
+### Blog content and images
+
+- Blog content is stored as raw Markdown and rendered on the public blog page.
+- The cover image is the hero image and is uploaded to Cloudinary.
+- Inline Cloudinary images can be inserted at the cursor with `INSERT_INLINE_IMAGE`.
+- Inline images from any public image host can be inserted with `INSERT IMAGE URL`. Google Drive sharing URLs are converted automatically; set the Drive file to **Anyone with the link / Viewer** first.
+- Blog title, slug, and content are required. Cover image and tags are optional. Long-form blog JSON requests support up to `1mb`.
 
 ### 2. Advanced Security — The Honeypot 🍯
 
@@ -160,7 +175,7 @@ The Express server (`server.js`) applies **10 security layers** before any route
 |---|-----------|------------|
 | 1 | `helmet` | Secure HTTP headers (XSS, clickjacking, MIME sniffing, etc.) |
 | 2 | `cors` | Strict allow-list — only your frontend origins can call the API |
-| 3 | `express.json({ limit: '10kb' })` | Payload size cap — prevents oversized body attacks |
+| 3 | `express.json({ limit: '1mb' })` | Payload size cap — supports long-form Markdown while limiting oversized body attacks |
 | 4 | `express-mongo-sanitize` | Strips `$` operators — blocks NoSQL injection |
 | 5 | `xss-clean` | Sanitises HTML in input — blocks Cross-Site Scripting |
 | 6 | `hpp` | Strips duplicate query params — blocks HTTP Parameter Pollution |

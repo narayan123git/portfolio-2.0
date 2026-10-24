@@ -12,6 +12,7 @@ import SkillManager from "../../../components/admin/SkillManager";
 import EducationManager from "../../../components/admin/EducationManager";
 import ExperienceManager from "../../../components/admin/ExperienceManager";
 import HomeContentManager from "../../../components/admin/HomeContentManager";
+import GuideManager from "../../../components/admin/GuideManager";
 export default function AdminDashboard() {
   const router = useRouter();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -67,6 +68,12 @@ export default function AdminDashboard() {
       <aside className="w-64 border-r border-green-900/50 p-6 flex flex-col h-screen sticky top-0">
         <h2 className="text-xl font-bold tracking-widest mb-10 text-white">SYS_ADMIN</h2>
         <nav className="flex-1 space-y-4">
+          <button
+            onClick={() => setActiveTab("guide")}
+            className={`block w-full text-left p-2 hover:bg-green-900/30 transition-colors rounded ${activeTab === "guide" ? "bg-green-900/50 text-white border-l-2 border-green-400" : ""}`}
+          >
+            &gt; Guide
+          </button>
           <button
             onClick={() => setActiveTab("projects")}
             className={`block w-full text-left p-2 hover:bg-green-900/30 transition-colors rounded ${activeTab === "projects" ? "bg-green-900/50 text-white border-l-2 border-green-400" : ""}`}
@@ -146,6 +153,7 @@ export default function AdminDashboard() {
         </header>
         {/* Dynamic Content Container */}
         <div className="border border-green-900/50 rounded-lg p-6 bg-gray-900/50 min-h-[500px]">
+          {activeTab === "guide" && <GuideManager />}
           {activeTab === "projects" && <ProjectManager />}
           {activeTab === "blogs" && <BlogManager />}
           {activeTab === "diary" && <DiaryManager />}
