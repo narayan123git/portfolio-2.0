@@ -162,7 +162,7 @@ export default function BlogManager() {
       setCoverImage(null);
       setEditingId(null);
       fetchBlogs(); // Refresh the table
-      fetch('/api/revalidate?tag=content').catch(() => {});
+      fetch(`/api/revalidate?tag=content&slug=${encodeURIComponent(formData.slug)}`).catch(() => {});
       
       setTimeout(() => setStatus({ loading: false, message: "", type: "" }), 3000);
     } catch (error) {

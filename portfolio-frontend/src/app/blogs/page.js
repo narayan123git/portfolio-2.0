@@ -26,7 +26,7 @@ export const metadata = {
 async function getBlogs() {
   try {
     const res = await fetch(getApiUrl("/blogs"), {
-      next: { revalidate: BLOGS_REVALIDATE_SECONDS },
+      next: { revalidate: BLOGS_REVALIDATE_SECONDS, tags: ['content'] },
     });
 
     if (!res.ok) {

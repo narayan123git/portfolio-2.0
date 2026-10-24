@@ -78,7 +78,7 @@ const GitHubMarkdownComponents = {
 async function getBlog(slug) {
   try {
     const res = await fetch(getApiUrl(`/blogs/${slug}`), {
-      next: { revalidate: BLOG_REVALIDATE_SECONDS },
+      next: { revalidate: BLOG_REVALIDATE_SECONDS, tags: ['content'] },
     });
 
     if (res.status === 404) {
@@ -98,7 +98,7 @@ async function getBlog(slug) {
 async function getAllBlogs() {
   try {
     const res = await fetch(getApiUrl("/blogs"), {
-      next: { revalidate: BLOG_REVALIDATE_SECONDS },
+      next: { revalidate: BLOG_REVALIDATE_SECONDS, tags: ['content'] },
     });
     if (!res.ok) {
       return [];
