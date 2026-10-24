@@ -75,7 +75,7 @@ After logging in at `/admin`, open the **Guide** tab in `/admin/dashboard`. It e
 
 For inline images, paste any publicly accessible image URL into the blog editor and click **INSERT IMAGE URL** at the desired cursor position. Google Drive links are converted automatically; set the Drive file permission to **Anyone with the link / Viewer** first. The cover image remains a separate Cloudinary upload.
 
-Blog content is raw Markdown, so normal text can be pasted beside headings, lists, links, code, and images. Long-form blog requests support up to `1mb` of JSON content.
+Blog content is raw Markdown, so normal text can be pasted beside headings, lists, links, code, images, and GIFs. Google Drive image links are converted to an embeddable thumbnail URL. GIF files can be uploaded with `INSERT_INLINE_IMAGE`, or a public GIF URL can be inserted with `INSERT IMAGE URL`. Long-form blog requests support up to `1mb` of JSON content.
 
 ### SEO Endpoints
 

@@ -15,7 +15,7 @@ const imageStorage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
     folder: 'portfolio_assets', // A dedicated folder in your cloud
-    allowed_formats: ['jpg', 'jpeg', 'png', 'webp'], // Security: block malicious file types
+    allowed_formats: ['jpg', 'jpeg', 'png', 'webp', 'gif'], // Security: block malicious file types
     transformation: [{ width: 1200, crop: 'limit' }], // Auto-compress massive images
   },
 });

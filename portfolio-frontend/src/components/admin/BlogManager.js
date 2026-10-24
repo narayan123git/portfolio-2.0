@@ -19,7 +19,7 @@ const normalizeGoogleDriveImageUrl = (value) => {
   const fileId = url.match(/drive\.google\.com\/file\/d\/([^/]+)/)?.[1]
     || url.match(/[?&]id=([^&]+)/)?.[1];
 
-  return fileId ? `https://drive.google.com/uc?export=view&id=${fileId}` : url;
+  return fileId ? `https://drive.google.com/thumbnail?id=${fileId}&sz=w2000` : url;
 };
 
 export default function BlogManager() {

@@ -13,7 +13,7 @@ function normalizeGoogleDriveImageUrl(value) {
   const fileId = value.match(/drive\.google\.com\/file\/d\/([^/]+)/)?.[1]
     || value.match(/[?&]id=([^&]+)/)?.[1];
 
-  return fileId ? `https://drive.google.com/uc?export=view&id=${fileId}` : value;
+  return fileId ? `https://drive.google.com/thumbnail?id=${fileId}&sz=w2000` : value;
 }
 
 const GitHubMarkdownComponents = {

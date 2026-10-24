@@ -156,7 +156,7 @@ The authenticated dashboard includes a **Guide** tab at `/admin/dashboard`. It i
 - Blog content is stored as raw Markdown and rendered on the public blog page.
 - The cover image is the hero image and is uploaded to Cloudinary.
 - Inline Cloudinary images can be inserted at the cursor with `INSERT_INLINE_IMAGE`.
-- Inline images from any public image host can be inserted with `INSERT IMAGE URL`. Google Drive sharing URLs are converted automatically; set the Drive file to **Anyone with the link / Viewer** first.
+- Inline images and GIFs from any public image host can be inserted with `INSERT IMAGE URL`. Google Drive sharing URLs are converted automatically; set the Drive file to **Anyone with the link / Viewer** first. Direct public GIF URLs preserve animation.
 - Blog title, slug, and content are required. Cover image and tags are optional. Long-form blog JSON requests support up to `1mb`.
 
 ### 2. Advanced Security — The Honeypot 🍯
