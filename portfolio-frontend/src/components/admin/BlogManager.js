@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 const parseResponseBody = async (response) => {
   const rawBody = await response.text();
@@ -14,6 +14,14 @@ const parseResponseBody = async (response) => {
   }
 };
 
+const normalizeGoogleDriveImageUrl = (value) => {
+  const url = value.trim();
+  const fileId = url.match(/drive\.google\.com\/file\/d\/([^/]+)/)?.[1]
+    || url.match(/[?&]id=([^&]+)/)?.[1];
+
+  return fileId ? `https://drive.google.com/uc?export=view&id=${fileId}` : url;
+};
+
 export default function BlogManager() {
   const [blogs, setBlogs] = useState([]);
   const [editingId, setEditingId] = useState(null);
@@ -21,6 +29,9 @@ export default function BlogManager() {
     title: "", slug: "", coverImageUrl: "", content: "", aiSummary: "", tags: "", readTime: "", published: true
   });
   const [coverImage, setCoverImage] = useState(null);
+  const [inlineImageUrl, setInlineImageUrl] = useState("");
+  const [inlineImageUploading, setInlineImageUploading] = useState(false);
+  const contentRef = useRef(null);
   const [status, setStatus] = useState({ loading: false, message: "", type: "" });
 
   // 1. Fetch existing records on load
@@ -43,6 +54,64 @@ export default function BlogManager() {
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData((prev) => ({ ...prev, [name]: type === "checkbox" ? checked : value }));
+  };
+
+  const handleInlineImageUpload = async (e) => {
+    const image = e.target.files?.[0];
+    e.target.value = "";
+    if (!image) return;
+
+    setInlineImageUploading(true);
+    try {
+      const imageForm = new FormData();
+      imageForm.append("image", image);
+      const uploadRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/upload`, {
+        method: "POST",
+        credentials: "include",
+        body: imageForm,
+      });
+      const uploadData = await parseResponseBody(uploadRes);
+      if (!uploadRes.ok) throw new Error(uploadData.message || "Inline image upload failed");
+
+      const textarea = contentRef.current;
+      const imageMarkdown = `![${image.name.replace(/\.[^.]+$/, "")}](${uploadData.imageUrl})`;
+      const start = textarea?.selectionStart ?? formData.content.length;
+      const end = textarea?.selectionEnd ?? start;
+      const nextContent = `${formData.content.slice(0, start)}${imageMarkdown}${formData.content.slice(end)}`;
+      setFormData((prev) => ({ ...prev, content: nextContent }));
+      requestAnimationFrame(() => {
+        if (textarea) {
+          const cursor = start + imageMarkdown.length;
+          textarea.focus();
+          textarea.setSelectionRange(cursor, cursor);
+        }
+      });
+    } catch (error) {
+      setStatus({ loading: false, message: `[ERROR]: ${error.message}`, type: "error" });
+    } finally {
+      setInlineImageUploading(false);
+    }
+  };
+
+  const handleImageUrl = () => {
+    if (!inlineImageUrl.trim()) return;
+
+    const textarea = contentRef.current;
+    const imageUrl = normalizeGoogleDriveImageUrl(inlineImageUrl);
+    const imageMarkdown = `![Inline blog image](${imageUrl})`;
+    const start = textarea?.selectionStart ?? formData.content.length;
+    const end = textarea?.selectionEnd ?? start;
+    const nextContent = `${formData.content.slice(0, start)}${imageMarkdown}${formData.content.slice(end)}`;
+
+    setFormData((prev) => ({ ...prev, content: nextContent }));
+    setInlineImageUrl("");
+    requestAnimationFrame(() => {
+      if (textarea) {
+        const cursor = start + imageMarkdown.length;
+        textarea.focus();
+        textarea.setSelectionRange(cursor, cursor);
+      }
+    });
   };
 
   // 2. Handle Insert OR Update
@@ -85,7 +154,8 @@ export default function BlogManager() {
         body: JSON.stringify({ ...formData, coverImageUrl, tags: tagsArray }),
       });
 
-      if (!res.ok) throw new Error("Failed to save log");
+      const responseData = await parseResponseBody(res);
+      if (!res.ok) throw new Error(responseData.message || "Failed to save log");
 
       setStatus({ loading: false, message: editingId ? "LOG_UPDATED_SUCCESSFULLY" : "LOG_PUBLISHED_SUCCESSFULLY", type: "success" });
       setFormData({ title: "", slug: "", coverImageUrl: "", content: "", aiSummary: "", tags: "", readTime: "", published: true });
@@ -157,7 +227,24 @@ export default function BlogManager() {
 
         <div>
           <label className="block text-xs text-green-600 mb-1">Main Content</label>
-          <textarea name="content" value={formData.content} onChange={handleInputChange} required rows="6" className="w-full bg-gray-950 border border-green-900 rounded p-2 text-sm text-green-400 focus:outline-none focus:border-green-400" />
+          <textarea ref={contentRef} name="content" value={formData.content} onChange={handleInputChange} required rows="12" className="w-full bg-gray-950 border border-green-900 rounded p-2 text-sm text-green-400 focus:outline-none focus:border-green-400" />
+          <label className="inline-block mt-2 text-xs text-green-500 border border-green-900 px-3 py-2 rounded cursor-pointer hover:border-green-500">
+            {inlineImageUploading ? "UPLOADING_IMAGE..." : "INSERT_INLINE_IMAGE"}
+            <input type="file" accept="image/*" onChange={handleInlineImageUpload} disabled={inlineImageUploading} className="hidden" />
+          </label>
+          <div className="flex flex-col sm:flex-row gap-2 mt-3">
+            <input
+              type="url"
+              value={inlineImageUrl}
+              onChange={(e) => setInlineImageUrl(e.target.value)}
+              placeholder="Public image URL (Drive or any image host)"
+              className="flex-1 bg-gray-950 border border-green-900 rounded p-2 text-xs text-green-400 focus:outline-none focus:border-green-400"
+            />
+            <button type="button" onClick={handleImageUrl} className="border border-green-900 px-3 py-2 rounded text-xs text-green-500 hover:border-green-500">
+              INSERT IMAGE URL
+            </button>
+          </div>
+          <p className="text-xs text-green-700 mt-2">Use any public image URL. For Google Drive, set the file to Anyone with the link before pasting its sharing URL.</p>
         </div>
 
         <div className="border border-green-900/50 p-4 rounded bg-gray-950/30">

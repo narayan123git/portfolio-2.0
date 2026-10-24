@@ -1,5 +1,15 @@
 const Blog = require('../models/Blog');
 
+const normalizeSummary = (summary) => (
+  Array.isArray(summary)
+    ? summary
+    : String(summary || '').split(/\r?\n/)
+).map((point) => String(point).trim()).filter(Boolean);
+
+const normalizeTags = (tags) => (
+  Array.isArray(tags) ? tags : String(tags || '').split(',')
+).map((tag) => String(tag).trim()).filter(Boolean);
+
 // @desc    Get all blogs (Public gets published, Admin gets all)
 // @route   GET /api/blogs
 exports.getBlogs = async (req, res) => {
@@ -34,21 +44,24 @@ exports.getBlogBySlug = async (req, res) => {
 exports.createBlog = async (req, res) => {
   try {
     const { title, slug, coverImageUrl, content, aiSummary, tags, readTime, published } = req.body;
-    
+
     const blog = await Blog.create({ 
       title, 
       slug, 
       coverImageUrl,
       content, 
-      aiSummary, 
-      tags, 
+      aiSummary: normalizeSummary(aiSummary),
+      tags: normalizeTags(tags),
       readTime, 
       published 
     });
     
     res.status(201).json(blog);
   } catch (error) {
-    res.status(500).json({ message: 'Server error while creating blog.' });
+    if (error.name === 'ValidationError' || error.code === 11000) {
+      return res.status(400).json({ message: error.message });
+    }
+    res.status(500).json({ message: error.message || 'Server error while creating blog.' });
   }
 };
 
@@ -56,9 +69,13 @@ exports.createBlog = async (req, res) => {
 // @route   PUT /api/blogs/:id
 exports.updateBlog = async (req, res) => {
   try {
+    const updateData = { ...req.body };
+    if ('aiSummary' in updateData) updateData.aiSummary = normalizeSummary(updateData.aiSummary);
+    if ('tags' in updateData) updateData.tags = normalizeTags(updateData.tags);
+
     const updatedBlog = await Blog.findByIdAndUpdate(
       req.params.id, 
-      req.body, 
+      updateData,
       { new: true } // Returns the newly updated document
     );
     

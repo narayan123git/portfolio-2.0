@@ -7,6 +7,15 @@ import { SITE_URL, getApiUrl } from "@/lib/siteConfig";
 
 const BLOG_REVALIDATE_SECONDS = 300;
 
+function normalizeGoogleDriveImageUrl(value) {
+  if (typeof value !== "string") return value;
+
+  const fileId = value.match(/drive\.google\.com\/file\/d\/([^/]+)/)?.[1]
+    || value.match(/[?&]id=([^&]+)/)?.[1];
+
+  return fileId ? `https://drive.google.com/uc?export=view&id=${fileId}` : value;
+}
+
 const GitHubMarkdownComponents = {
   h1: ({ children }) => <h1 className="text-4xl font-bold border-b border-slate-300/25 pb-4 mb-6 mt-8 text-slate-100">{children}</h1>,
   h2: ({ children }) => <h2 className="text-3xl font-bold border-b border-slate-300/20 pb-3 mb-5 mt-7 text-slate-100">{children}</h2>,
@@ -24,7 +33,7 @@ const GitHubMarkdownComponents = {
   ),
   img: ({ src, alt }) => (
     <img
-      src={src}
+      src={normalizeGoogleDriveImageUrl(src)}
       alt={alt || "Blog image"}
       className="max-w-full h-auto rounded-xl border border-slate-300/20 my-6 shadow-lg shadow-black/40"
       loading="lazy"

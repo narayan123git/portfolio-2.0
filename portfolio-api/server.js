@@ -70,8 +70,8 @@ app.use(cors({
   credentials: true
 }));
 
-// 3. Parse JSON payloads (Limit size to 10kb to prevent payload overload attacks)
-app.use(express.json({ limit: '10kb' }));
+// 3. Parse JSON payloads. Blog content is long-form Markdown, so it needs more room.
+app.use(express.json({ limit: '1mb' }));
 app.use(cookieParser());
 
 // 4. Sanitize data against NoSQL query injection
